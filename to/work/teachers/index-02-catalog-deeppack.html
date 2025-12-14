@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- =========================================
+       [PART-02 | CATALOG-DEEPPACK] — Metadata
+       If concatenating, remove this <head> and keep only Part-01 <head>.
+  ============================================== -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PRA Teacher Uplift — Catalog Deep Pack</title>
+  <meta name="description" content="A deep catalog of zero/near-zero cost options for teachers. One-click install into the main app’s IndexedDB.">
+  <meta name="theme-color" content="#0b1b2b">
+  <link rel="icon" href="data:,">
+  <style>
+    :root{
+      --bg:#07121b; --card:#0e2436; --ink:#e8f0f6; --muted:#a6bdc9; --accent:#73ffd2;
+      --chip:#11324b; --chip2:#2a4861;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+    a{color:var(--accent)} a:hover{opacity:.85}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px}
+    .card{background:var(--card);border:1px solid #0f334e;border-radius:16px;padding:16px;box-shadow:0 6px 24px rgba(0,0,0,.25);margin:12px 0}
+    h1,h2,h3{margin:.2rem 0 .6rem} h1{font-size:1.6rem} h2{font-size:1.2rem}
+    .small{font-size:.9rem} .muted{color:var(--muted)}
+    .btn{appearance:none;border:1px solid #1f4965;background:#10334b;color:var(--ink);padding:.55rem .8rem;border-radius:12px;cursor:pointer}
+    .btn:hover{filter:brightness(1.08)}
+    .btn-primary{background:linear-gradient(90deg,#0f586e,#0f3f6e)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .right{margin-left:auto}
+    .pill{display:inline-block;background:#0c2233;border:1px solid #244a64;border-radius:999px;padding:.2rem .55rem;font-size:.8rem}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin:.25rem 0}
+    .chip{background:var(--chip);border:1px solid #1c4058;padding:.25rem .55rem;border-radius:24px;font-size:.85rem}
+    details{background:#0d2030;border:1px solid #1b4360;border-radius:12px;padding:10px}
+    summary{cursor:pointer}
+    pre{white-space:pre-wrap;word-wrap:break-word;background:#0b1f2e;border:1px solid #244a64;border-radius:12px;padding:10px}
+  </style>
+</head>
+<body>
+<main class="wrap" id="app">
+
+  <!-- =========================================
+       [PART-02] — Header & TOC link
+  ============================================== -->
+  <section class="card">
+    <div class="row">
+      <div>
+        <h1>Catalog Deep Pack <span class="pill">Zero/Near-Zero Cost</span></h1>
+        <div class="muted small">Preview, copy snippets, and one-click install into the main app (File 1).</div>
+      </div>
+      <div class="right row">
+        <a class="btn" href="index-01-shell-toc.html">Back to TOC</a>
+        <button class="btn btn-primary" id="btnInstallAll">Install Deep Catalog into App</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================
+       [PART-02] — Search/Filters (local to this file)
+  ============================================== -->
+  <section class="card">
+    <div class="row">
+      <input id="q" placeholder="Search title, tags, category, country, skills…" style="flex:1 1 360px;padding:.6rem;border-radius:12px;border:1px solid #21445c;background:#0c1f30;color:#e8f0f6">
+      <button class="btn" id="btnClear">Clear</button>
+      <div class="pill" id="count">0</div>
+    </div>
+    <div class="chips" id="tagBar"></div>
+  </section>
+
+  <!-- =========================================
+       [PART-02] — Catalog (preview)
+  ============================================== -->
+  <section class="card">
+    <h2>Deep Catalog Preview</h2>
+    <div id="catalog" class="grid" role="list"></div>
+  </section>
+
+  <!-- =========================================
+       [PART-02] — Notes
+  ============================================== -->
+  <section class="card small muted">
+    <details>
+      <summary><strong>Notes on “near-zero cost” language</strong></summary>
+      <ul>
+        <li>Items labeled “$0” are typically free tiers or open platforms with no required payment.</li>
+        <li>Items labeled “near-$0” may have optional paid features, but are usable without payment for small classes.</li>
+        <li>Self-host options are listed only when a reputable free hosted alternative exists or setup is trivial.</li>
+      </ul>
+    </details>
+  </section>
+
+</main>
+
+<!-- =========================================
+     [PART-02] — App logic (local viewer + installer)
+     Safe to include alongside File-01; no conflicts.
+============================================= -->
+<script>
+/* ===== Shared DB schema ===== */
+const DB_NAME='teacherUpliftDB', DB_VER=1;
+let db;
+function idbOpen(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open(DB_NAME,DB_VER);
+    req.onupgradeneeded=e=>{
+      const d=e.target.result;
+      if(!d.objectStoreNames.contains('plans')){
+        const s=d.createObjectStore('plans',{keyPath:'id',autoIncrement:true});
+        s.createIndex('by_title','title',{unique:false});
+      }
+      if(!d.objectStoreNames.contains('profile')){
+        d.createObjectStore('profile',{keyPath:'k'});
+      }
+      if(!d.objectStoreNames.contains('options')){
+        d.createObjectStore('options',{keyPath:'slug'});
+      }
+      if(!d.objectStoreNames.contains('tags')){
+        d.createObjectStore('tags',{keyPath:'name'});
+      }
+    };
+    req.onsuccess=e=>{db=e.target.result;res(db);}
+    req.onerror=e=>rej(e.target.error);
+  });
+}
+function tx(store,mode='readonly'){return db.transaction(store,mode).objectStore(store);}
+const idb = {
+  async getAll(store){return new Promise((res,rej)=>{const r=tx(store).getAll(); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});},
+  async put(store,val){return new Promise((res,rej)=>{const r=tx(store,'readwrite').put(val); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});},
+  async putMany(store,vals){return new Promise((res,rej)=>{const t=db.transaction(store,'readwrite'); const s=t.objectStore(store); vals.forEach(v=>s.put(v)); t.oncomplete=()=>res(); t.onerror=()=>rej(t.error);});},
+  async delete(store,key){return new Promise((res,rej)=>{const r=tx(store,'readwrite').delete(key); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error);});},
+  async get(store,key){return new Promise((res,rej)=>{const r=tx(store).get(key); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});}
+};
+
+/* ===== Utilities ===== */
+const $=sel=>document.querySelector(sel);
+function el(tag,props){const e=document.createElement(tag);Object.assign(e,props||{});return e;}
+function uniq(a){return Array.from(new Set(a));}
+function includes(hay,needle){return String(hay||'').toLowerCase().includes(String(needle||'').toLowerCase());}
+function match(obj,q){return (
+  includes(obj.title,q) || includes(obj.desc,q) || includes(obj.category,q) ||
+  (obj.tags||[]).some(t=>includes(t,q)) || includes((obj.skills||[]).join(','),q) ||
+  includes((obj.countries||[]).join(','),q)
+);}
+
+/* ===== Deep Catalog =====
+   Fields:
+   - slug, title, cost, tags[], link, desc
+   - category, skills[], countries[], snippet (quick-copy for plan body)
+*/
+const DEEP_PACK = [
+  /* -------- HOSTING & PUBLISHING -------- */
+  {slug:'cloudflare-pages', title:'Cloudflare Pages (static)', cost:'$0', category:'Hosting/Publishing',
+   tags:['hosting','website','cdn','git-optional'], link:'https://pages.cloudflare.com/',
+   desc:'Fast global static hosting; connect a repo or drag-and-drop.',
+   snippet:`Use Cloudflare Pages for a class site. Upload static HTML packs from this app. No server admin needed.`},
+
+  {slug:'github-pages', title:'GitHub Pages (static site)', cost:'$0', category:'Hosting/Publishing',
+   tags:['hosting','website','student-portfolio'], link:'https://pages.github.com/',
+   desc:'Instant static hosting for student work and plan pages.',
+   snippet:`Create a repo <username>.github.io and push a /docs folder. Toggle Pages in repo settings.`},
+
+  {slug:'netlify-drop', title:'Netlify Drop (drag & host)', cost:'$0', category:'Hosting/Publishing',
+   tags:['hosting','no-login'], link:'https://app.netlify.com/drop',
+   desc:'Drag a folder to publish. Great for quick plan pages.',
+   snippet:`Export a plan to a static folder then drop it on Netlify Drop for an instant public link.`},
+
+  {slug:'glitch', title:'Glitch (static remix)', cost:'$0', category:'Hosting/Publishing',
+   tags:['prototype','hosting'], link:'https://glitch.com/',
+   desc:'Remix a static site; publish instantly.',
+   snippet:`Click “New Project → Hello Webpage”, paste your HTML, share the live URL with students.`},
+
+  /* -------- DOCS & COLLAB -------- */
+  {slug:'hackmd', title:'HackMD / CodiMD', cost:'$0', category:'Docs/Collab',
+   tags:['docs','collab','markdown'], link:'https://hackmd.io/',
+   desc:'Collaborative markdown notes for syllabi and grant drafts.',
+   snippet:`Create a shared syllabus in HackMD; export to HTML and embed in your plan.`},
+
+  {slug:'etherpad', title:'Etherpad (collab notes)', cost:'$0', category:'Docs/Collab',
+   tags:['docs','realtime'], link:'https://etherpad.org/',
+   desc:'Real-time collaborative text editing; many free instances exist.',
+   snippet:`Use a public Etherpad instance to co-draft lesson plans with students.`},
+
+  {slug:'notion-edu', title:'Notion (EDU plan)', cost:'$0', category:'Docs/Collab',
+   tags:['docs','wiki','kanban'], link:'https://www.notion.so/',
+   desc:'All-in-one notes + kanban. EDU credits often available.',
+   snippet:`Set up a classroom wiki, resource board, and task tracker in one space.`},
+
+  /* -------- FORMS & SURVEYS -------- */
+  {slug:'google-forms', title:'Google Forms', cost:'$0', category:'Forms/Surveys',
+   tags:['forms','surveys','intake'], link:'https://forms.google.com/',
+   desc:'Collect requests, micro-grants, and feedback.',
+   snippet:`Create an intake: “What do you need this month?” Auto-fills a spreadsheet for receipts.`},
+
+  {slug:'typeform-free', title:'Typeform (free tier)', cost:'near-$0', category:'Forms/Surveys',
+   tags:['forms','surveys'], link:'https://www.typeform.com/',
+   desc:'Beautiful forms with limited free tier.',
+   snippet:`Use for donor stories and classroom impact surveys.`},
+
+  {slug:'formspree', title:'Formspree (static forms)', cost:'$0', category:'Forms/Surveys',
+   tags:['forms','static'], link:'https://formspree.io/',
+   desc:'Receive form submissions from static sites — no backend.',
+   snippet:`Embed a contact/donate form on static plan pages; Formspree collects submissions.`},
+
+  /* -------- CLASSROOM CONTENT -------- */
+  {slug:'khan', title:'Khan Academy', cost:'$0', category:'Classroom/Content',
+   tags:['math','science','self-paced'], link:'https://www.khanacademy.org/',
+   desc:'Mastery paths for math & science with teacher dashboards.',
+   snippet:`Assign a skill path and track mastery weekly. Works well for hybrid classrooms.`},
+
+  {slug:'oercommons', title:'OER Commons', cost:'$0', category:'Classroom/Content',
+   tags:['oer','open-license','curriculum'], link:'https://www.oercommons.org/',
+   desc:'Curated open educational resources for remixing and sharing.',
+   snippet:`Find a licensed unit, adapt for your class, credit the source, redistribute.`},
+
+  {slug:'ck12', title:'CK-12 FlexBooks', cost:'$0', category:'Classroom/Content',
+   tags:['textbooks','science','math'], link:'https://www.ck12.org/',
+   desc:'Customizable digital textbooks.',
+   snippet:`Assemble a FlexBook for Physics basics; students can read offline via app.`},
+
+  {slug:'phET', title:'PhET Interactive Sims', cost:'$0', category:'Classroom/Content',
+   tags:['science','simulations'], link:'https://phet.colorado.edu/',
+   desc:'Interactive science and math simulations.',
+   snippet:`Use “Forces and Motion: Basics” for inquiry labs with minimal materials.`},
+
+  {slug:'readworks', title:'ReadWorks', cost:'$0', category:'Classroom/Content',
+   tags:['literacy','reading'], link:'https://www.readworks.org/',
+   desc:'Research-based reading passages & question sets.',
+   snippet:`Assign paired texts at multiple Lexiles for inclusive reading practice.`},
+
+  /* -------- VIDEO & LIVE -------- */
+  {slug:'obs', title:'OBS Studio', cost:'$0', category:'Video/Live',
+   tags:['recording','stream','virtual-classroom'], link:'https://obsproject.com/',
+   desc:'Record lessons or stream; virtual camera for live demos.',
+   snippet:`Record 8–10 minute micro-lessons; upload to a free host; link from your plan.`},
+
+  {slug:'jitsi', title:'Jitsi Meet', cost:'$0', category:'Video/Live',
+   tags:['video','meet','no-login'], link:'https://meet.jit.si/',
+   desc:'Encrypted, fast video meetings with no account needed.',
+   snippet:`Create a room name and share. Use screen share + captions.`},
+
+  {slug:'loom-free', title:'Loom (free tier)', cost:'$0', category:'Video/Live',
+   tags:['asynchronous','explainers'], link:'https://www.loom.com/',
+   desc:'Quick screen+cam explainers for flipped classroom.',
+   snippet:`Record a 3-minute concept fix and embed the link in your plan.`},
+
+  /* -------- CHAT & COMMUNITY -------- */
+  {slug:'tlk-io', title:'tlk.io', cost:'$0', category:'Chat/Community',
+   tags:['chat','embed','no-login'], link:'https://tlk.io/',
+   desc:'Drop-in chat rooms embeddable in static pages.',
+   snippet:`Create a class room “teacher-uplift-algebra” and embed via iframe.`},
+
+  {slug:'discord-edu', title:'Discord (EDU-friendly setup)', cost:'$0', category:'Chat/Community',
+   tags:['community','voice','moderation'], link:'https://discord.com/',
+   desc:'Create channels for office hours, Q&A, and peer help.',
+   snippet:`Enable community tools; add #help, #wins, #resources; post weekly warm-ups.`},
+
+  /* -------- DATA & VISUALS -------- */
+  {slug:'observable', title:'Observable (notebooks)', cost:'$0', category:'Data/Visualization',
+   tags:['data','javascript','visual'], link:'https://observablehq.com/',
+   desc:'Interactive notebooks for data exploration.',
+   snippet:`Students fork a chart notebook and plug in local CSVs.`},
+
+  {slug:'google-sheets', title:'Google Sheets (charts)', cost:'$0', category:'Data/Visualization',
+   tags:['spreadsheets','charts'], link:'https://sheets.google.com/',
+   desc:'Simple dashboards, charts, and shareable CSVs.',
+   snippet:`Track donations & spending; publish chart images back to the plan.`},
+
+  {slug:'metabase-lite', title:'Metabase (lite use, hosted)', cost:'near-$0', category:'Data/Visualization',
+   tags:['dashboards'], link:'https://www.metabase.com/',
+   desc:'Low-setup analytics when you need a dashboard (self-host or free trials).',
+   snippet:`Prototype a donor transparency dashboard; later export static images.`},
+
+  /* -------- TRANSLATION & ACCESSIBILITY -------- */
+  {slug:'readalong', title:'Read Along (Google)', cost:'$0', category:'Translation/Accessibility',
+   tags:['literacy','speech'], link:'https://readalong.google.com/',
+   desc:'Helps early readers with speech feedback.',
+   snippet:`Use for foundational literacy without signups; add to home study kits.`},
+
+  {slug:'immersive-reader', title:'Immersive Reader', cost:'$0', category:'Translation/Accessibility',
+   tags:['a11y','reading'], link:'https://aka.ms/immersivereader',
+   desc:'Text spacing, read aloud, translation — very low friction.',
+   snippet:`Offer accessible versions of class texts via Immersive Reader links.`},
+
+  {slug:'deepl', title:'DeepL (free tier)', cost:'$0', category:'Translation/Accessibility',
+   tags:['translate'], link:'https://www.deepl.com/translator',
+   desc:'High-quality machine translation for parent letters & materials.',
+   snippet:`Provide translated parent info sheets; double-check key terms.`},
+
+  /* -------- HARDWARE & REUSE -------- */
+  {slug:'pc-refurb', title:'Refurbish PCs (guide)', cost:'$0', category:'Hardware/Reuse',
+   tags:['hardware','linux','refurb'], link:'https://ubuntu.com/download/desktop',
+   desc:'Refurbish donated PCs with lightweight Linux.',
+   snippet:`Install Ubuntu or Linux Mint on donated laptops; preload offline content.`},
+
+  {slug:'raspberry-pi', title:'Raspberry Pi (lab kits)', cost:'near-$0', category:'Hardware/Reuse',
+   tags:['hardware','kits','coding'], link:'https://www.raspberrypi.com/',
+   desc:'Mini-computers for CS labs and maker spaces.',
+   snippet:`Pair Pi + keyboard + old monitor; run Scratch, Python, and low-power labs.`},
+
+  /* -------- FUNDING (MICRO) -------- */
+  {slug:'buymeacoffee', title:'Buy Me a Coffee', cost:'%', category:'Funding',
+   tags:['funding','micro-donations'], link:'https://www.buymeacoffee.com/',
+   desc:'Quick micro-donations with QR codes.',
+   snippet:`Add a “classroom coffee” link to supply whiteboard markers monthly.`},
+
+  {slug:'opencollective', title:'Open Collective', cost:'0–%', category:'Funding',
+   tags:['funding','transparency'], link:'https://opencollective.com/',
+   desc:'Transparent funds with public budgets.',
+   snippet:`Publish receipts; let donors see where every dollar goes.`},
+
+  {slug:'patreon', title:'Patreon (tiers)', cost:'%', category:'Funding',
+   tags:['membership','funding'], link:'https://www.patreon.com/',
+   desc:'Tiered memberships for ongoing classroom support.',
+   snippet:`Offer a “class sponsor” tier with monthly updates and student thank-yous.`},
+
+  /* -------- MISC TEACHING UTILITIES -------- */
+  {slug:'canva-edu', title:'Canva for Education', cost:'$0', category:'Teaching Utilities',
+   tags:['design','templates'], link:'https://www.canva.com/education/',
+   desc:'Design lesson visuals, posters, and printables.',
+   snippet:`Create printable “starter packs” for low-internet homes.`},
+
+  {slug:'quizizz', title:'Quizizz', cost:'$0', category:'Teaching Utilities',
+   tags:['quizzes','games'], link:'https://quizizz.com/',
+   desc:'Live and asynchronous quizzes with game elements.',
+   snippet:`Run a 10-question exit ticket at the end of each lesson.`},
+
+  {slug:'wordwall', title:'Wordwall (free tier)', cost:'$0', category:'Teaching Utilities',
+   tags:['games','vocab'], link:'https://wordwall.net/',
+   desc:'Simple classroom games (matching, unscramble).',
+   snippet:`Create vocabulary games and embed links in your plan.`},
+
+  {slug:'scratch', title:'Scratch', cost:'$0', category:'Teaching Utilities',
+   tags:['coding','blocks'], link:'https://scratch.mit.edu/',
+   desc:'Block-based coding for beginners.',
+   snippet:`Weekly mini-projects: build a music sequencer or interactive story.`},
+
+  {slug:'replit', title:'Replit (free tier)', cost:'$0', category:'Teaching Utilities',
+   tags:['coding','online-ide'], link:'https://replit.com/',
+   desc:'Online IDE with instant hosting for tiny demos.',
+   snippet:`Students fork a template, edit in browser, and share a live link.`},
+
+  /* -------- LIGHTWEIGHT CMS / BLOG -------- */
+  {slug:'bearblog', title:'Bear Blog', cost:'$0', category:'CMS/Blog',
+   tags:['blog','no-tracking'], link:'https://bearblog.dev/',
+   desc:'Minimal, fast blogging for class updates.',
+   snippet:`Post weekly class updates; RSS for parents.`},
+
+  {slug:'writefreely', title:'WriteFreely (hosted instances)', cost:'$0', category:'CMS/Blog',
+   tags:['blog','fediverse'], link:'https://writefreely.org/',
+   desc:'Clean writing platform; many community hosts.',
+   snippet:`Publish essays; cross-share to the fediverse when ready.`},
+
+  /* -------- FILE SEND / STORAGE -------- */
+  {slug:'wormhole', title:'Magic Wormhole (files)', cost:'$0', category:'File Send',
+   tags:['files','p2p'], link:'https://magic-wormhole.readthedocs.io/',
+   desc:'Send files with human-readable codes; end-to-end style.',
+   snippet:`Share student resource packs privately without new accounts.`},
+
+  {slug:'filetransfer', title:'Firefox Send (community forks)', cost:'$0', category:'File Send',
+   tags:['files','temporary'], link:'https://send.vis.ee/',
+   desc:'One-off encrypted file sends; link expires.',
+   snippet:`Send printable bundles to parents securely.`},
+];
+
+/* ===== Page boot ===== */
+let SELECTED_TAGS = new Set();
+(async function(){
+  await idbOpen();
+  renderTags(DEEP_PACK);
+  renderCatalog(DEEP_PACK);
+  $('#q').addEventListener('input', ()=>applyFilters());
+  $('#btnClear').addEventListener('click', ()=>{ $('#q').value=''; SELECTED_TAGS.clear(); renderTags(DEEP_PACK); applyFilters(); });
+  $('#btnInstallAll').addEventListener('click', installAll);
+})();
+
+/* ===== Renderers ===== */
+function renderTags(items){
+  const bar=$('#tagBar'); bar.innerHTML='';
+  const tags = uniq(items.flatMap(o=>o.tags||[])).sort();
+  tags.forEach(t=>{
+    const b=el('button',{className:'chip',textContent:t});
+    if(SELECTED_TAGS.has(t)) b.style.background = 'var(--chip2)';
+    b.onclick=()=>{ SELECTED_TAGS.has(t)?SELECTED_TAGS.delete(t):SELECTED_TAGS.add(t); applyFilters(); renderTags(items); };
+    bar.appendChild(b);
+  });
+}
+function applyFilters(){
+  const q = $('#q').value.trim().toLowerCase();
+  const f = DEEP_PACK.filter(o=>{
+    const tagOk = !SELECTED_TAGS.size || (o.tags||[]).some(t=>SELECTED_TAGS.has(t));
+    const qOk = !q || match(o,q);
+    return tagOk && qOk;
+  });
+  renderCatalog(f);
+}
+function renderCatalog(list){
+  const grid=$('#catalog'); grid.innerHTML=''; $('#count').textContent=String(list.length);
+  list.forEach(o=>{
+    const card=el('div',{className:'card', role:'listitem'});
+    const head=el('div',{className:'row'});
+    head.appendChild(el('h3',{textContent:o.title}));
+    head.appendChild(el('span',{className:'pill',textContent:o.cost}));
+    head.appendChild(el('div',{className:'right pill',textContent:o.category}));
+    card.appendChild(head);
+    card.appendChild(el('div',{className:'muted small',textContent:o.desc}));
+    const chips=el('div',{className:'chips'});
+    (o.tags||[]).forEach(t=>chips.appendChild(el('span',{className:'chip',textContent:t})));
+    card.appendChild(chips);
+    const row=el('div',{className:'row'});
+    const btnOpen=el('button',{className:'btn',textContent:'Open'});
+    btnOpen.onclick=()=>window.open(o.link,'_blank');
+    const btnCopy=el('button',{className:'btn',textContent:'Copy Snippet'});
+    btnCopy.onclick=()=>navigator.clipboard.writeText(o.snippet||o.desc||o.title);
+    row.appendChild(btnOpen); row.appendChild(btnCopy);
+    card.appendChild(row);
+    if(o.snippet){
+      const det=el('details',{}); det.appendChild(el('summary',{textContent:'Snippet'}));
+      det.appendChild(el('pre',{textContent:o.snippet}));
+      card.appendChild(det);
+    }
+    grid.appendChild(card);
+  });
+}
+
+/* ===== Installer ===== */
+async function installAll(){
+  // Normalize to the options schema used by File 1; extra fields are preserved.
+  const options = DEEP_PACK.map(o=>({
+    slug:o.slug, title:o.title, cost:o.cost, tags:o.tags||[],
+    link:o.link, desc:o.desc, category:o.category, skills:o.skills||[],
+    countries:o.countries||[], snippet:o.snippet||''
+  }));
+  // Store tags
+  const tagObjs = uniq(DEEP_PACK.flatMap(o=>o.tags||[])).map(name=>({name}));
+  await idb.putMany('options', options);
+  await idb.putMany('tags', tagObjs);
+  alert('Deep Catalog installed into the main app.\nOpen index-01-shell-toc.html (File 1) and refresh to see all items.');
+}
+</script>
+
+<!-- =========================================
+     [PART-02 END]
+============================================= -->
+</body>
+</html>

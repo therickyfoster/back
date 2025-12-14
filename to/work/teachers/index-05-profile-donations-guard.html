@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- =========================================
+       [PART-05 | PROFILE-DONATIONS-GUARD] — Metadata
+       If concatenating, remove this <head> and keep only Part-01 <head>.
+  ============================================== -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PRA Teacher Uplift — Profile, Donations & Guardrails</title>
+  <meta name="theme-color" content="#0b1b2b">
+  <link rel="icon" href="data:,">
+  <style>
+    :root{
+      --bg:#07121b; --card:#0e2436; --ink:#e8f0f6; --muted:#a6bdc9; --accent:#73ffd2;
+      --chip:#11324b; --chip2:#2a4861; --rule:#15344a; --call:#0c2233;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,Segoe UI,Roboto,Ubuntu,Arial}
+    a{color:var(--accent)} a:hover{opacity:.88}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px}
+    .card{background:var(--card);border:1px solid var(--rule);border-radius:16px;padding:16px;box-shadow:0 6px 24px rgba(0,0,0,.25);margin:12px 0}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .col{flex:1 1 260px}
+    .right{margin-left:auto}
+    .btn{appearance:none;border:1px solid #1f4965;background:#10334b;color:var(--ink);padding:.55rem .8rem;border-radius:12px;cursor:pointer}
+    .btn:hover{filter:brightness(1.07)}
+    .btn-primary{background:linear-gradient(90deg,#0f586e,#0f3f6e)}
+    input,select,textarea{width:100%;padding:.6rem;border-radius:12px;border:1px solid #21445c;background:#0c1f30;color:var(--ink)}
+    h1,h2,h3{margin:.2rem 0 .6rem} h1{font-size:1.6rem} h2{font-size:1.2rem}
+    .muted{color:var(--muted)} .small{font-size:.9rem}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin:.25rem 0}
+    .chip{background:var(--chip);border:1px solid #1c4058;padding:.25rem .55rem;border-radius:24px;font-size:.85rem}
+    .pill{display:inline-block;background:#0c2233;border:1px solid #244a64;border-radius:999px;padding:.2rem .55rem;font-size:.8rem}
+    pre{white-space:pre-wrap;word-wrap:break-word;background:#0b1f2e;border:1px solid #244a64;border-radius:12px;padding:10px}
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid var(--rule);padding:8px;vertical-align:top}
+    .kbd{font-family:ui-monospace,Consolas,monospace;background:#0b1f2e;border:1px solid #244a64;border-radius:6px;padding:.05rem .3rem}
+    .ok{color:#77ff99}.warn{color:#ffd773}.bad{color:#ff7b7b}
+    @media (max-width:520px){ .table td[data-th]:before{content:attr(data-th) ": ";font-weight:bold;display:block;color:#a6bdc9} .table thead{display:none} .table tr{display:block;margin:8px 0} .table td{display:block;border:none;border-bottom:1px solid #15344a} }
+  </style>
+</head>
+<body>
+<main class="wrap" id="app">
+  <!-- =========================================
+       [PART-05] — Header & Nav
+  ============================================== -->
+  <section class="card">
+    <div class="row">
+      <div>
+        <h1>Profile, Donations & Guardrails <span class="pill">Verification • Safety • Audit</span></h1>
+        <div class="muted small">Set donation routes, generate share blocks, add an optional PGP signature, and maintain a local audit trail.</div>
+      </div>
+      <div class="right row">
+        <a class="btn" href="index-01-shell-toc.html">Back to TOC</a>
+        <button class="btn btn-primary" id="btnSaveAll">Save All</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================
+       [PART-05] — Local Profile (Mnemonic, Identity)
+  ============================================== -->
+  <section class="card">
+    <h2>Local Profile</h2>
+    <div class="row">
+      <div class="col"><label>Display Name</label><input id="profName" placeholder="Your public name"></div>
+      <div class="col"><label>Mnemonic</label><input id="profMnemonic" readonly></div>
+    </div>
+    <div class="small muted">This mnemonic identifies your local profile (no server). Quote it when exporting/importing across devices.</div>
+  </section>
+
+  <!-- =========================================
+       [PART-05] — Donation Routes (incl. XMR)
+  ============================================== -->
+  <section class="card">
+    <h2>Donation Routes</h2>
+    <div class="row">
+      <div class="col"><label>Interac e-Transfer</label><input id="donInterac" placeholder="email@domain.tld"></div>
+      <div class="col"><label>Buy Me a Coffee</label><input id="donBMC" placeholder="https://www.buymeacoffee.com/you"></div>
+    </div>
+    <div class="row">
+      <div class="col"><label>BTC</label><input id="donBTC" placeholder="bc1…"></div>
+      <div class="col"><label>ETH</label><input id="donETH" placeholder="0x…"></div>
+    </div>
+    <div class="row">
+      <div class="col"><label>SOL</label><input id="donSOL" placeholder="…"></div>
+      <div class="col"><label>XMR (Monero)</label><input id="donXMR" placeholder="4… (optional overlay address)"></div>
+    </div>
+    <div class="row">
+      <div class="col"><label>Open Collective</label><input id="donOC" placeholder="https://opencollective.com/your-collective"></div>
+      <div class="col"><label>Patreon</label><input id="donPatreon" placeholder="https://patreon.com/you"></div>
+    </div>
+
+    <details style="margin-top:8px">
+      <summary><strong>Generate a Funding Block for Plans</strong></summary>
+      <div class="row">
+        <div class="col"><label>Title (optional)</label><input id="blockTitle" placeholder="Support the Classroom"></div>
+        <div class="col"><label>Style</label>
+          <select id="blockStyle">
+            <option value="simple">Simple list</option>
+            <option value="chips">Chips</option>
+            <option value="markdown">Markdown</option>
+          </select>
+        </div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn" id="btnPreviewBlock">Preview</button>
+        <button class="btn" id="btnCopyBlock">Copy</button>
+      </div>
+      <div id="blockPreview" style="margin-top:8px"></div>
+      <pre id="blockCode" class="small" style="margin-top:8px"></pre>
+    </details>
+  </section>
+
+  <!-- =========================================
+       [PART-05] — Verification Guardrails
+  ============================================== -->
+  <section class="card">
+    <h2>Verification & Safety</h2>
+    <div class="row">
+      <div class="col">
+        <label>Verification Checklist</label>
+        <table class="table" id="verTable" aria-label="Verification checklist">
+          <thead><tr><th>Done</th><th>Item</th><th>Notes</th><th>Action</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="small muted">
+          Add simple, auditable steps for donor confidence. Keep receipts, publish periodic updates, and use at least one peer verifier.
+        </div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="btnAddVer">Add Item</button>
+      <button class="btn" id="btnResetVer">Reset to Defaults</button>
+    </div>
+  </section>
+
+  <!-- =========================================
+       [PART-05] — Optional PGP Signature Block
+  ============================================== -->
+  <section class="card">
+    <h2>Optional Signature (PGP text block)</h2>
+    <div class="row">
+      <div class="col"><label>Your PGP Public Key (ASCII-armored)</label><textarea id="pgpPub" rows="6" placeholder="-----BEGIN PGP PUBLIC KEY BLOCK----- …"></textarea></div>
+    </div>
+    <div class="row">
+      <div class="col"><label>Sign This Message (display only)</label><textarea id="pgpMsg" rows="3" placeholder="I confirm the above donation routes belong to me. Date: …"></textarea></div>
+    </div>
+    <div class="row">
+      <button class="btn" id="btnPGPPreview">Build Signature Block</button>
+      <button class="btn" id="btnPGPCopy">Copy Block</button>
+    </div>
+    <pre id="pgpPreview" class="small" style="margin-top:8px"></pre>
+    <div class="small muted">Note: This page does not perform real cryptographic signing. Use your preferred PGP tool to sign the message and paste the signature here for display.</div>
+  </section>
+
+  <!-- =========================================
+       [PART-05] — Local Audit Log
+  ============================================== -->
+  <section class="card">
+    <div class="row">
+      <h2>Audit Log <span class="pill" id="auditCount">0</span></h2>
+      <div class="right">
+        <button class="btn" id="btnAuditAdd">Add Entry</button>
+        <button class="btn" id="btnAuditExport">Export JSON</button>
+        <button class="btn" id="btnAuditClear">Clear</button>
+      </div>
+    </div>
+    <table class="table" id="auditTable" aria-label="Audit log">
+      <thead><tr><th>Time</th><th>Type</th><th>Details</th><th>Actions</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="small muted">Stored locally in your browser (IndexedDB). Consider exporting occasionally.</div>
+  </section>
+</main>
+
+<!-- =========================================
+     [PART-05] — DB & Logic (compatible with other files)
+============================================= -->
+<script>
+/* ===== Shared DB schema (v3 adds audit/ver) ===== */
+const DB_NAME='teacherUpliftDB', DB_VER=3;
+let db;
+function idbOpen(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open(DB_NAME,DB_VER);
+    req.onupgradeneeded=e=>{
+      const d=e.target.result;
+      if(!d.objectStoreNames.contains('plans')){
+        const s=d.createObjectStore('plans',{keyPath:'id',autoIncrement:true});
+        s.createIndex('by_title','title',{unique:false});
+      }
+      if(!d.objectStoreNames.contains('profile')){
+        d.createObjectStore('profile',{keyPath:'k'});
+      }
+      if(!d.objectStoreNames.contains('options')){
+        d.createObjectStore('options',{keyPath:'slug'});
+      }
+      if(!d.objectStoreNames.contains('tags')){
+        d.createObjectStore('tags',{keyPath:'name'});
+      }
+      if(!d.objectStoreNames.contains('analytics')){
+        const a=d.createObjectStore('analytics',{keyPath:'k'});
+        a.createIndex('by_plan','plan',{unique:false});
+      }
+      if(!d.objectStoreNames.contains('events')){
+        const eStore=d.createObjectStore('events',{keyPath:'id',autoIncrement:true});
+        eStore.createIndex('by_plan','plan',{unique:false});
+      }
+      if(!d.objectStoreNames.contains('audits')){
+        d.createObjectStore('audits',{keyPath:'id',autoIncrement:true});
+      }
+      if(!d.objectStoreNames.contains('verifications')){
+        d.createObjectStore('verifications',{keyPath:'id',autoIncrement:true});
+      }
+    };
+    req.onsuccess=e=>{db=e.target.result;res(db);}
+    req.onerror=e=>rej(e.target.error);
+  });
+}
+function tx(store,mode='readonly'){return db.transaction(store,mode).objectStore(store);}
+const idb = {
+  async get(store,key){return new Promise((res,rej)=>{const r=tx(store).get(key); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});},
+  async put(store,val){return new Promise((res,rej)=>{const r=tx(store,'readwrite').put(val); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});},
+  async add(store,val){return new Promise((res,rej)=>{const r=tx(store,'readwrite').add(val); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});},
+  async getAll(store){return new Promise((res,rej)=>{const r=tx(store).getAll(); r.onsuccess=()=>res(r.result||[]); r.onerror=()=>rej(r.error);});},
+  async delete(store,key){return new Promise((res,rej)=>{const r=tx(store,'readwrite').delete(key); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error);});}
+};
+
+/* ===== Helpers ===== */
+const $=sel=>document.querySelector(sel);
+function el(tag,props){const e=document.createElement(tag);Object.assign(e,props||{});return e;}
+function now(){return new Date();}
+function ts(n=new Date()){return n.toLocaleString();}
+function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]));}
+
+/* ===== Defaults ===== */
+const DEFAULT_VER_ITEMS = [
+  {txt:'Publish a monthly receipts summary (images or links).',notes:''},
+  {txt:'List a peer verifier (teacher/parent) with contact.',notes:''},
+  {txt:'Specify itemized needs with target quantities.',notes:''},
+  {txt:'Confirm donation routes on at least two channels.',notes:''}
+];
+
+/* ===== App State ===== */
+let PROFILE=null, VER_LIST=[], AUDITS=[];
+
+/* ===== Boot ===== */
+(async function(){
+  await idbOpen();
+  PROFILE = await idb.get('profile','me');
+  if(!PROFILE){ PROFILE = {k:'me', name:'Anonymous Teacher', mnemonic:'', routes:{}}; await idb.put('profile', PROFILE); }
+  bindProfile();
+  await loadVer();
+  await loadAudits();
+  bindActions();
+})();
+
+/* ===== Profile UI ===== */
+function bindProfile(){
+  $('#profName').value = PROFILE.name||'';
+  $('#profMnemonic').value = PROFILE.mnemonic||'';
+  $('#donInterac').value = PROFILE.routes?.interac||'';
+  $('#donBMC').value = PROFILE.routes?.bmc||'';
+  $('#donBTC').value = PROFILE.routes?.btc||'';
+  $('#donETH').value = PROFILE.routes?.eth||'';
+  $('#donSOL').value = PROFILE.routes?.sol||'';
+  $('#donXMR').value = PROFILE.routes?.xmr||'';
+  $('#donOC').value = PROFILE.routes?.oc||'';
+  $('#donPatreon').value = PROFILE.routes?.patreon||'';
+}
+function readProfileFromInputs(){
+  PROFILE.name = $('#profName').value.trim() || 'Anonymous Teacher';
+  PROFILE.mnemonic = $('#profMnemonic').value.trim() || PROFILE.mnemonic || '';
+  PROFILE.routes = {
+    interac: $('#donInterac').value.trim(),
+    bmc: $('#donBMC').value.trim(),
+    btc: $('#donBTC').value.trim(),
+    eth: $('#donETH').value.trim(),
+    sol: $('#donSOL').value.trim(),
+    xmr: $('#donXMR').value.trim(),
+    oc: $('#donOC').value.trim(),
+    patreon: $('#donPatreon').value.trim()
+  };
+}
+
+/* ===== Funding Block Builder ===== */
+function makeFundingList(style='simple', title=''){
+  const r = PROFILE.routes||{};
+  const lines = [
+    r.interac?`interac: ${r.interac}`:'',
+    r.bmc?`BMC: ${r.bmc}`:'',
+    r.oc?`OpenCollective: ${r.oc}`:'',
+    r.patreon?`Patreon: ${r.patreon}`:'',
+    r.btc?`btc: ${r.btc}`:'',
+    r.eth?`eth: ${r.eth}`:'',
+    r.sol?`sol: ${r.sol}`:'',
+    r.xmr?`xmr: ${r.xmr}`:''
+  ].filter(Boolean);
+
+  if(style==='markdown'){
+    const md = (title?`### ${title}\n\n`:'') + lines.map(l=>`- ${l}`).join('\n');
+    return {html:`<pre>${escapeHtml(md)}</pre>`, code:md};
+  }
+  if(style==='chips'){
+    const chips = lines.map(l=>`<span class="chip">${escapeHtml(l)}</span>`).join(' ');
+    const html = `<div class="card"><h3>${escapeHtml(title||'Funding')}</h3><div class="chips">${chips}</div></div>`;
+    return {html, code:html};
+  }
+  // simple
+  const html = `<div class="card"><h3>${escapeHtml(title||'Funding')}</h3><ul>${lines.map(l=>`<li>${escapeHtml(l)}</li>`).join('')}</ul></div>`;
+  return {html, code:html};
+}
+
+/* ===== Verification Checklist ===== */
+async function loadVer(){
+  VER_LIST = await idb.getAll('verifications');
+  if(!VER_LIST.length){
+    for(const it of DEFAULT_VER_ITEMS){ await idb.add('verifications', {done:false, txt:it.txt, notes:it.notes, ts:Date.now()}); }
+    VER_LIST = await idb.getAll('verifications');
+  }
+  renderVer();
+}
+function renderVer(){
+  const tb=$('#verTable tbody'); tb.innerHTML='';
+  VER_LIST.forEach((v,i)=>{
+    const tr=el('tr',{});
+    // done
+    const tdDone=el('td',{}); const chk=el('input',{type:'checkbox',checked:!!v.done}); chk.onchange=()=>{ v.done=chk.checked; }; tdDone.appendChild(chk); tr.appendChild(tdDone);
+    // item
+    const tdTxt=el('td',{}); const inpTxt=el('input',{value:v.txt||''}); inpTxt.oninput=()=>{ v.txt=inpTxt.value; }; tdTxt.appendChild(inpTxt); tr.appendChild(tdTxt);
+    // notes
+    const tdNotes=el('td',{}); const inpNotes=el('input',{value:v.notes||''}); inpNotes.oninput=()=>{ v.notes=inpNotes.value; }; tdNotes.appendChild(inpNotes); tr.appendChild(tdNotes);
+    // action
+    const tdAct=el('td',{}); const btnDel=el('button',{className:'btn',textContent:'Delete'}); btnDel.onclick=async()=>{ await idb.delete('verifications', v.id); VER_LIST.splice(i,1); renderVer(); }; tdAct.appendChild(btnDel); tr.appendChild(tdAct);
+    tb.appendChild(tr);
+  });
+}
+async function addVer(){ const id = await idb.add('verifications',{done:false,txt:'',notes:'',ts:Date.now()}); VER_LIST = await idb.getAll('verifications'); renderVer(); }
+async function resetVer(){
+  const list = await idb.getAll('verifications');
+  for(const v of list){ await idb.delete('verifications', v.id); }
+  await loadVer();
+}
+
+/* ===== Audit Log ===== */
+async function loadAudits(){ AUDITS = await idb.getAll('audits'); renderAudit(); }
+function renderAudit(){
+  $('#auditCount').textContent = String(AUDITS.length||0);
+  const tb=$('#auditTable tbody'); tb.innerHTML='';
+  AUDITS.sort((a,b)=> (a.ts||0)-(b.ts||0)).forEach(a=>{
+    const tr=el('tr',{});
+    tr.appendChild(el('td',{textContent:ts(new Date(a.ts))}));
+    tr.appendChild(el('td',{textContent:a.type||'note'}));
+    tr.appendChild(el('td',{textContent:a.details||''}));
+    const tdAct=el('td',{}); const btnDel=el('button',{className:'btn',textContent:'Delete'}); btnDel.onclick=async()=>{ await idb.delete('audits', a.id); AUDITS = AUDITS.filter(x=>x.id!==a.id); renderAudit(); }; tdAct.appendChild(btnDel); tr.appendChild(tdAct);
+    tb.appendChild(tr);
+  });
+}
+async function addAuditEntry(){
+  const details = prompt('Audit details (e.g., “Uploaded receipts for Sept”)')||'';
+  if(!details) return;
+  await idb.add('audits',{type:'note',details,ts:Date.now()});
+  await loadAudits();
+}
+async function exportAudits(){
+  const data = await idb.getAll('audits');
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a = el('a',{href:URL.createObjectURL(blob), download:`audits-${new Date().toISOString().slice(0,10)}.json`});
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+}
+async function clearAudits(){
+  const data = await idb.getAll('audits');
+  if(!confirm(`Clear ${data.length} audit entries?`)) return;
+  for(const a of data){ await idb.delete('audits', a.id); }
+  await loadAudits();
+}
+
+/* ===== PGP Block (display only) ===== */
+function buildPGPBlock(){
+  const pub = $('#pgpPub').value.trim();
+  const msg = $('#pgpMsg').value.trim();
+  if(!pub && !msg){ return ''; }
+  const block = [
+    '-----BEGIN PRA DISPLAY BLOCK-----',
+    'Note: Use your PGP tool to sign the following message and publish the signature separately.',
+    'Message:',
+    msg || '(none)',
+    'PGP Public Key:',
+    pub || '(none pasted)',
+    '-----END PRA DISPLAY BLOCK-----'
+  ].join('\n');
+  return block;
+}
+
+/* ===== Actions ===== */
+function bindActions(){
+  $('#btnSaveAll').onclick = async ()=>{
+    readProfileFromInputs();
+    await idb.put('profile', PROFILE);
+    // persist verification rows
+    for(const v of VER_LIST){ await idb.put('verifications', v); }
+    await idb.add('audits',{type:'settings',details:'Updated profile/donation routes',ts:Date.now()});
+    alert('Saved ✔');
+  };
+
+  $('#btnPreviewBlock').onclick = ()=>{
+    readProfileFromInputs();
+    const {html, code} = makeFundingList($('#blockStyle').value, $('#blockTitle').value.trim());
+    $('#blockPreview').innerHTML = html;
+    $('#blockCode').textContent = code;
+  };
+  $('#btnCopyBlock').onclick = ()=>navigator.clipboard.writeText($('#blockCode').textContent||'');
+
+  $('#btnAddVer').onclick = addVer;
+  $('#btnResetVer').onclick = resetVer;
+
+  $('#btnPGPPreview').onclick = ()=>{
+    const block = buildPGPBlock();
+    $('#pgpPreview').textContent = block;
+  };
+  $('#btnPGPCopy').onclick = ()=>navigator.clipboard.writeText($('#pgpPreview').textContent||'');
+
+  $('#btnAuditAdd').onclick = addAuditEntry;
+  $('#btnAuditExport').onclick = exportAudits;
+  $('#btnAuditClear').onclick = clearAudits;
+}
+</script>
+
+<!-- =========================================
+     [PART-05 END]
+============================================= -->
+</body>
+</html>

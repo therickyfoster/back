@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- =========================================
+       [PART-01 | SHELL+TOC] — Metadata
+       If concatenating, keep only the first <head> block.
+  ============================================== -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PRA Teacher Uplift — Zero-Cost Plans (Shell + TOC)</title>
+  <meta name="description" content="Local-first planner helping teachers deploy zero/near-zero cost solutions, funding routes, and community scaffolding.">
+  <meta name="theme-color" content="#0b1b2b">
+  <link rel="icon" href="data:,">
+
+  <!-- =========================================
+       [PART-01] — Base Styles (keep once)
+  ============================================== -->
+  <style>
+    :root{
+      --bg:#07121b; --card:#0e2436; --ink:#e8f0f6; --muted:#a6bdc9; --accent:#73ffd2;
+      --accent2:#ffd773; --good:#77ff99; --warn:#ffd773; --bad:#ff7b7b;
+      --chip:#11324b; --chip2:#2a4861;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+    a{color:var(--accent)} a:hover{opacity:.85}
+    header{position:sticky;top:0;z-index:5;background:linear-gradient(180deg,rgba(7,18,27,.95),rgba(7,18,27,.7));backdrop-filter:blur(6px);border-bottom:1px solid #0f334e}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px}
+    .row{display:flex;gap:16px;flex-wrap:wrap}
+    .col{flex:1 1 320px}
+    .card{background:var(--card);border:1px solid #0f334e;border-radius:16px;padding:16px;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+    h1,h2,h3{margin:.2rem 0 .6rem} h1{font-size:1.6rem} h2{font-size:1.2rem}
+    .muted{color:var(--muted)} .small{font-size:.9rem}
+    .btn{appearance:none;border:1px solid #1f4965;background:#10334b;color:var(--ink);padding:.55rem .8rem;border-radius:12px;cursor:pointer}
+    .btn:hover{filter:brightness(1.08)}
+    .btn-primary{background:linear-gradient(90deg,#0f586e,#0f3f6e)}
+    .btn-ghost{background:transparent;border-color:#274f6b}
+    input,select,textarea{width:100%;padding:.6rem;border-radius:12px;border:1px solid #21445c;background:#0c1f30;color:var(--ink)}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin:.25rem 0}
+    .chip{background:var(--chip);border:1px solid #1c4058;padding:.25rem .55rem;border-radius:24px;font-size:.85rem;cursor:pointer}
+    .chip.active{background:var(--chip2);border-color:#35607d}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+    .badge{display:inline-block;padding:.15rem .45rem;border:1px solid #315573;border-radius:8px;background:#0c2233;font-size:.8rem;margin-left:.4rem}
+    .pill{display:inline-block;background:#0c2233;border:1px solid #244a64;border-radius:999px;padding:.2rem .55rem;font-size:.8rem}
+    .kbd{font-family:ui-monospace,Consolas,monospace;background:#0b1f2e;border:1px solid #244a64;border-radius:6px;padding:.05rem .3rem}
+    .right{margin-left:auto}
+    .notice{background:#092033;border:1px dashed #2b5d7f;border-radius:12px;padding:10px;color:var(--muted)}
+    footer{opacity:.8}
+    /* tlk overlay */
+    #chatToggle{position:fixed;bottom:18px;right:18px;z-index:50}
+    #chatFrame{position:fixed;bottom:70px;right:18px;width:360px;height:480px;border:1px solid #1e4663;border-radius:16px;display:none;z-index:50;box-shadow:0 10px 32px rgba(0,0,0,.45)}
+    /* collapsible sections */
+    details{background:#0d2030;border:1px solid #1b4360;border-radius:12px;padding:10px}
+    summary{cursor:pointer}
+    /* table */
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid #15344a;padding:8px;vertical-align:top}
+    @media (max-width:480px){ #chatFrame{width:92vw;height:55vh} }
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap row" role="banner" aria-label="Header">
+    <div>
+      <h1>Teacher Uplift <span class="badge">Shell + TOC</span></h1>
+      <div class="muted small">Local-first planner to get teachers back to work with zero/near-zero cost options.</div>
+    </div>
+    <div class="right row" role="toolbar" aria-label="Header actions">
+      <button class="btn btn-ghost" id="btnProfile">Profile</button>
+      <button class="btn btn-ghost" id="btnImport">Import</button>
+      <button class="btn btn-ghost" id="btnExport">Export</button>
+      <button class="btn btn-primary" id="btnAddPlan">New Plan</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="app" aria-live="polite">
+
+  <!-- =========================================
+       [PART-01] — MASTER TOC (links to all files)
+       Keep this block only once when concatenated.
+  ============================================== -->
+  <section class="card" aria-label="Master TOC">
+    <h2>Master Table of Contents</h2>
+    <ol class="small">
+      <li><a href="index-01-shell-toc.html">01 — Shell + TOC (this page)</a></li>
+      <li><a href="index-02-catalog-deeppack.html">02 — Catalog Deep Pack (0-cost & near-0 cost)</a></li>
+      <li><a href="index-03-plan-builder-pro.html">03 — Plan Builder Pro (checklists, budgets, QR)</a></li>
+      <li><a href="index-04-publish-viewer-pro.html">04 — Publish & Viewer Pro (permalinks, RO view)</a></li>
+      <li><a href="index-05-profile-donations-guard.html">05 — Profile, Donations & Guardrails</a></li>
+      <li><a href="index-06-offline-chat-ext.html">06 — Offline, A11y, Theming & Chat Extensions</a></li>
+    </ol>
+    <div class="notice">To merge into one giant file later: open each file, copy contents between
+      the markers and remove duplicate outer wrappers (<span class="kbd">&lt;!DOCTYPE html&gt;…&lt;/html&gt;</span>).
+    </div>
+  </section>
+
+  <!-- =========================================
+       [PART-01] — SEARCH & FILTERS (core)
+  ============================================== -->
+  <section class="card" aria-label="Search and Filters">
+    <div class="row">
+      <div class="col">
+        <label for="q">Search</label>
+        <input id="q" name="q" placeholder="Search plans & options (title, tags, country, skills) — press / to focus">
+      </div>
+      <div class="col">
+        <label for="country">Country</label>
+        <input id="country" placeholder="e.g., Canada, Ghana, Vietnam">
+      </div>
+      <div class="col">
+        <label for="skills">Skills</label>
+        <input id="skills" placeholder="e.g., math, ESL, coding, music">
+      </div>
+      <div class="col">
+        <label>&nbsp;</label>
+        <button class="btn" id="btnClear">Clear Filters</button>
+      </div>
+    </div>
+    <div class="chips" id="tagBar" aria-label="Quick tag filters"></div>
+  </section>
+
+  <!-- =========================================
+       [PART-01] — OPTIONS CATALOG (seed)
+       Deep pack will live in File-02; this is enough to operate today.
+  ============================================== -->
+  <section class="card" aria-label="Options Catalog">
+    <h2>Zero/Near-Zero Cost Options <span class="pill">copy & combine</span></h2>
+    <div class="muted small">Combine these building blocks into a plan. The deep catalog ships in File-02.</div>
+    <div id="catalog" class="grid" role="list"></div>
+  </section>
+
+  <!-- =========================================
+       [PART-01] — YOUR PLANS (IndexedDB)
+  ============================================== -->
+  <section class="card" aria-label="Your Plans">
+    <h2>Your Plans <span class="pill" id="planCount">0</span></h2>
+    <div id="plans" class="grid" role="list"></div>
+    <div class="notice small">Plans save locally (IndexedDB). Export JSON to back up or share.</div>
+  </section>
+
+  <!-- =========================================
+       [PART-01] — HOW IT WORKS (scaffold)
+  ============================================== -->
+  <section class="card" aria-label="How it Works">
+    <h2>How it Works</h2>
+    <ol class="small">
+      <li>Browse the <strong>Options Catalog</strong> and click <span class="kbd">Add</span>.</li>
+      <li>Create a <strong>New Plan</strong> → title, country, tags, skills, story, needs.</li>
+      <li>Add <strong>funding links</strong> (Interac, BTC, ETH, SOL, BMC, OC, Patreon).</li>
+      <li>Click <strong>Publish (Local)</strong> to get a hash URL stored in your browser.</li>
+      <li><strong>Export</strong> JSON to migrate/backup. Import on another device to continue.</li>
+    </ol>
+  </section>
+
+  <!-- =========================================
+       [PART-01] — MODALS (Plan, Profile)
+  ============================================== -->
+  <dialog id="modalPlan" aria-label="Plan modal">
+    <form method="dialog" class="card" style="max-width:780px">
+      <h2 id="modalPlanTitle">New Plan</h2>
+      <div class="row">
+        <div class="col">
+          <label>Title</label>
+          <input id="planTitle" required>
+        </div>
+        <div class="col">
+          <label>Country</label>
+          <input id="planCountry" placeholder="e.g., Canada">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <label>Tags (comma-sep)</label>
+          <input id="planTags" placeholder="ESL, after-school, rural">
+        </div>
+        <div class="col">
+          <label>Skills</label>
+          <input id="planSkills" placeholder="math, music">
+        </div>
+      </div>
+      <label>Story (what, who, why)</label>
+      <textarea id="planStory" rows="4" placeholder="A small heartbeat story + what success looks like…"></textarea>
+
+      <label>Needs (list concrete items)</label>
+      <textarea id="planNeeds" rows="3" placeholder="- Whiteboard markers
+- Used laptops
+- Printing credit"></textarea>
+
+      <label>Funding Links (one per line)</label>
+      <textarea id="planFunding" rows="3" placeholder="https://buymeacoffee.com/you
+interac: therickyfoster@outlook.com
+btc: bc1q6fyvqxm7jryy5edckk9nuu6mgyjlz4nnp8nksr
+eth: 0xCeA929dee554652261fd6261F3034A2D71C7BDDb
+sol: HfGCVthQ4Wp4CAYd4v7gJX53h6X3mdreUocjrhByPXQx"></textarea>
+
+      <details style="margin-top:8px">
+        <summary><strong>Attach Options</strong> (your collected building blocks)</summary>
+        <div id="attachedOptions" class="chips"></div>
+      </details>
+
+      <div class="row" style="margin-top:12px">
+        <div class="right">
+          <button class="btn btn-ghost" value="cancel">Cancel</button>
+          <button class="btn btn-primary" id="savePlan" value="default">Save</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="modalProfile" aria-label="Profile modal">
+    <form method="dialog" class="card" style="max-width:680px">
+      <h2>Local Profile</h2>
+      <div class="small muted">Mnemonic profile; no accounts, no servers.</div>
+      <div class="row">
+        <div class="col">
+          <label>Display Name</label>
+          <input id="profName" placeholder="Your public name">
+        </div>
+        <div class="col">
+          <label>Mnemonic</label>
+          <input id="profMnemonic" readonly>
+        </div>
+      </div>
+      <h3>Donation Routes</h3>
+      <div class="row">
+        <div class="col"><label>Interac e-Transfer</label><input id="donInterac" placeholder="email@domain.tld"></div>
+        <div class="col"><label>BTC</label><input id="donBTC" placeholder="bc1…"></div>
+      </div>
+      <div class="row">
+        <div class="col"><label>ETH</label><input id="donETH" placeholder="0x…"></div>
+        <div class="col"><label>SOL</label><input id="donSOL" placeholder="…"></div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <div class="right">
+          <button class="btn btn-ghost" value="cancel">Close</button>
+          <button class="btn btn-primary" id="saveProfile" value="default">Save Profile</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- =========================================
+       [PART-01] — PUBLISHED VIEWER (hash routes)
+  ============================================== -->
+  <section id="viewer" class="card" style="display:none" aria-label="Published Plan">
+    <h2 id="vTitle"></h2>
+    <div class="muted small" id="vMeta"></div>
+    <div id="vStory" style="margin-top:8px"></div>
+    <details style="margin-top:8px" open>
+      <summary><strong>Needs</strong></summary>
+      <pre id="vNeeds" class="small"></pre>
+    </details>
+    <details style="margin-top:8px" open>
+      <summary><strong>Funding</strong></summary>
+      <ul id="vFunding"></ul>
+    </details>
+    <div class="chips" id="vTags"></div>
+    <div class="chips" id="vOptions"></div>
+  </section>
+
+</main>
+
+<!-- =========================================
+     [PART-01] — CHAT OVERLAY (tlk.io)
+============================================= -->
+<iframe id="chatFrame" title="Community chat" loading="lazy"
+        src="https://tlk.io/teacher-uplift"></iframe>
+<button class="btn" id="chatToggle">Chat</button>
+
+<!-- =========================================
+     [PART-01] — TEMPLATES
+============================================= -->
+<template id="tmplOption">
+  <div class="card" role="listitem">
+    <div class="row">
+      <div><h3 class="o_title"></h3></div>
+      <div class="right"><span class="pill o_cost"></span></div>
+    </div>
+    <div class="muted small o_desc"></div>
+    <div class="chips o_tags"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn btn-ghost o_link">Open</button>
+      <button class="btn o_add right">Add</button>
+    </div>
+  </div>
+</template>
+
+<template id="tmplPlan">
+  <div class="card" role="listitem">
+    <div class="row">
+      <div><h3 class="p_title"></h3></div>
+      <div class="right">
+        <button class="btn btn-ghost p_star" title="Favorite">☆</button>
+        <button class="btn btn-ghost p_pub" title="Publish">Publish</button>
+        <button class="btn btn-ghost p_edit" title="Edit">Edit</button>
+        <button class="btn p_del" title="Delete">Delete</button>
+      </div>
+    </div>
+    <div class="muted small p_meta"></div>
+    <div class="chips p_tags"></div>
+    <div class="muted small p_story"></div>
+  </div>
+</template>
+
+<!-- =========================================
+     [PART-01] — INLINE SERVICE WORKER (basic)
+============================================= -->
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
+    self.addEventListener('install', e=>{
+      e.waitUntil(caches.open('teacher-uplift-v1').then(c=>c.addAll(['./'])));
+      self.skipWaiting();
+    });
+    self.addEventListener('activate', e=>self.clients.claim());
+    self.addEventListener('fetch', e=>{
+      const u=new URL(e.request.url);
+      if(u.origin===location.origin){
+        e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));
+      }
+    });
+  `], {type:'text/javascript'}))).catch(console.warn);
+}
+</script>
+
+<!-- =========================================
+     [PART-01] — APP LOGIC (IndexedDB + Core)
+     Keep only one copy on concat; later files add modules.
+============================================= -->
+<script>
+/* ====== Core IndexedDB wrapper ====== */
+const DB_NAME='teacherUpliftDB', DB_VER=1;
+let db;
+function idbOpen(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open(DB_NAME,DB_VER);
+    req.onupgradeneeded=e=>{
+      const d=e.target.result;
+      if(!d.objectStoreNames.contains('plans')){
+        const s=d.createObjectStore('plans',{keyPath:'id',autoIncrement:true});
+        s.createIndex('by_title','title',{unique:false});
+      }
+      if(!d.objectStoreNames.contains('profile')){
+        d.createObjectStore('profile',{keyPath:'k'});
+      }
+      if(!d.objectStoreNames.contains('options')){
+        d.createObjectStore('options',{keyPath:'slug'});
+      }
+      if(!d.objectStoreNames.contains('tags')){
+        d.createObjectStore('tags',{keyPath:'name'});
+      }
+    };
+    req.onsuccess=e=>{db=e.target.result;res(db);}
+    req.onerror=e=>rej(e.target.error);
+  });
+}
+function tx(store,mode='readonly'){return db.transaction(store,mode).objectStore(store);}
+const idb = {
+  async getAll(store){return new Promise((res,rej)=>{const r=tx(store).getAll(); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});},
+  async put(store,val){return new Promise((res,rej)=>{const r=tx(store,'readwrite').put(val); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});},
+  async delete(store,key){return new Promise((res,rej)=>{const r=tx(store,'readwrite').delete(key); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error);});},
+  async get(store,key){return new Promise((res,rej)=>{const r=tx(store).get(key); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});}
+};
+
+/* ====== Helpers ====== */
+const $=sel=>document.querySelector(sel);
+function el(tag,props){const e=document.createElement(tag);Object.assign(e,props||{});return e;}
+function csv(str){return (str||'').split(',').map(s=>s.trim()).filter(Boolean);}
+function lines(str){return (str||'').split('\n').map(s=>s.trim()).filter(Boolean);}
+function uid(){return Math.random().toString(36).slice(2,10);}
+function toHashLink(type,id){return `#/${type}/${encodeURIComponent(String(id))}`;}
+function fromHash(){const m=location.hash.match(/^#\/([^/]+)\/(.+)/); return m?{type:m[1],id:decodeURIComponent(m[2])}:null;}
+function words(n=3){
+  const list=['river','mycelium','constellation','seed','orchard','delta','ember','atlas','echo','lumen','terra','kind','forge','compass','pulse','weave','garden','harbor','ledger','quiet','brave','clarity','moss','root','halo','nova','spire','kin','arc'];
+  let r=[]; for(let i=0;i<n;i++) r.push(list[Math.floor(Math.random()*list.length)]);
+  return r.join('-');
+}
+
+/* ====== Default Profile (Foster + Navi prefill) ====== */
+const DEFAULT_PROFILE = {
+  name: 'Foster + Navi',
+  mnemonic: words(3),
+  routes: {
+    interac: 'therickyfoster@outlook.com',
+    btc: 'bc1q6fyvqxm7jryy5edckk9nuu6mgyjlz4nnp8nksr',
+    eth: '0xCeA929dee554652261fd6261F3034A2D71C7BDDb',
+    sol: 'HfGCVthQ4Wp4CAYd4v7gJX53h6X3mdreUocjrhByPXQx'
+  }
+};
+
+/* ====== Seed Catalog (File-02 adds massive pack) ====== */
+const CATALOG = [
+  {slug:'github-pages', title:'GitHub Pages (static site)', cost:'$0', tags:['hosting','website','student-portfolio'],
+   link:'https://pages.github.com/', desc:'Instant static hosting for class sites, student showcases, or resource hubs.'},
+  {slug:'netlify-drop', title:'Netlify Drop (drag-and-host)', cost:'$0', tags:['hosting','no-login'],
+   link:'https://app.netlify.com/drop', desc:'Drag a folder to publish. Great for quick plan pages.'},
+  {slug:'google-forms', title:'Google Forms (intakes & micro-grants)', cost:'$0', tags:['funding','forms'],
+   link:'https://forms.google.com/', desc:'Collect requests, track needs, and publish a response sheet.'},
+  {slug:'canva-edu', title:'Canva for Education', cost:'$0', tags:['design','templates'],
+   link:'https://www.canva.com/education/', desc:'Create printable packs, posters, and lesson visuals.'},
+  {slug:'obs-virtual-cam', title:'OBS + Virtual Classroom', cost:'$0', tags:['stream','record','tutorials'],
+   link:'https://obsproject.com/', desc:'Record short lessons, share on YouTube or direct download.'},
+  {slug:'oer', title:'Open Educational Resources (OER)', cost:'$0', tags:['curriculum','open-license'],
+   link:'https://www.oercommons.org/', desc:'Remix & redistribute lessons legally.'},
+];
+
+/* ====== App State ====== */
+let PROFILE = null;
+let SELECTED_TAGS = new Set();
+let ATTACHED = new Set();
+
+/* ====== Boot ====== */
+(async function(){
+  await idbOpen();
+  if(!await idb.get('profile','me')) await idb.put('profile',{k:'me', ...DEFAULT_PROFILE});
+  PROFILE = await idb.get('profile','me');
+  // seed catalog
+  if(!(await idb.getAll('options')).length){
+    for(const o of CATALOG){ await idb.put('options', o); for(const t of o.tags) await idb.put('tags', {name:t}); }
+  }
+  bindUI();
+  renderAll();
+  route();
+})();
+
+/* ====== UI & Render ====== */
+function bindUI(){
+  // search
+  document.querySelector('#q').addEventListener('input', renderAll);
+  document.querySelector('#country').addEventListener('input', renderAll);
+  document.querySelector('#skills').addEventListener('input', renderAll);
+  document.querySelector('#btnClear').addEventListener('click', ()=>{
+    q.value=''; country.value=''; skills.value=''; SELECTED_TAGS.clear(); renderAll();
+  });
+  // actions
+  btnAddPlan.addEventListener('click', ()=>openPlanModal());
+  btnProfile.addEventListener('click', openProfile);
+  btnImport.addEventListener('click', importData);
+  btnExport.addEventListener('click', exportData);
+  // search shortcut
+  window.addEventListener('keydown',(e)=>{ if(e.key==='/' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){ e.preventDefault(); q.focus(); }});
+  // chat overlay
+  chatToggle.addEventListener('click', ()=>{ chatFrame.style.display = chatFrame.style.display==='none'?'block':'none'; });
+  // routing
+  window.addEventListener('hashchange', route);
+}
+async function renderAll(){
+  const [opts, plans, tags] = await Promise.all([idb.getAll('options'), idb.getAll('plans'), idb.getAll('tags')]);
+  renderTags(tags||[]);
+  renderCatalog(filterList(opts||[]));
+  renderPlans(filterList(plans||[]));
+}
+function renderTags(list){
+  const bar = document.querySelector('#tagBar'); bar.innerHTML='';
+  list.sort((a,b)=>a.name.localeCompare(b.name)).forEach(t=>{
+    const b=el('button',{className:'chip'+(SELECTED_TAGS.has(t.name)?' active':''), textContent:t.name});
+    b.onclick=()=>{ SELECTED_TAGS.has(t.name)?SELECTED_TAGS.delete(t.name):SELECTED_TAGS.add(t.name); renderAll(); };
+    bar.appendChild(b);
+  });
+}
+function renderCatalog(list){
+  const grid = document.querySelector('#catalog'); grid.innerHTML='';
+  const tpl = document.querySelector('#tmplOption').content;
+  list.forEach(o=>{
+    const node = tpl.cloneNode(true);
+    node.querySelector('.o_title').textContent=o.title;
+    node.querySelector('.o_cost').textContent=o.cost;
+    node.querySelector('.o_desc').textContent=o.desc;
+    const tags = node.querySelector('.o_tags'); (o.tags||[]).forEach(t=>{
+      const c=el('span',{className:'chip',textContent:t}); c.onclick=()=>{SELECTED_TAGS.add(t); renderAll();}; tags.appendChild(c);
+    });
+    node.querySelector('.o_link').onclick=()=>window.open(o.link,'_blank');
+    node.querySelector('.o_add').onclick=()=>attachOption(o.slug);
+    grid.appendChild(node);
+  });
+}
+function renderPlans(list){
+  planCount.textContent=String(list.length);
+  const grid = document.querySelector('#plans'); grid.innerHTML='';
+  const tpl = document.querySelector('#tmplPlan').content;
+  list.sort((a,b)=>b.updated-a.updated).forEach(p=>{
+    const n=tpl.cloneNode(true);
+    n.querySelector('.p_title').textContent=p.title;
+    n.querySelector('.p_meta').textContent=[p.country, (p.skills||[]).join(', ')].filter(Boolean).join(' · ');
+    const tagBox = n.querySelector('.p_tags'); (p.tags||[]).forEach(t=>tagBox.appendChild(el('span',{className:'chip',textContent:t})));
+    n.querySelector('.p_story').textContent=(p.story||'').slice(0,160)+(p.story&&p.story.length>160?'…':'');
+    const btns = n.querySelectorAll('button');
+    btns[0].textContent = p.star?'★':'☆';
+    btns[0].onclick = async ()=>{ p.star=!p.star; await idb.put('plans',p); renderPlans(list); };
+    btns[1].onclick = ()=>publishPlan(p);
+    btns[2].onclick = ()=>openPlanModal(p);
+    btns[3].onclick = async()=>{ await idb.delete('plans',p.id); renderAll(); };
+    grid.appendChild(n);
+  });
+}
+
+/* ====== Filters ====== */
+function matchText(hay,needle){ return String(hay||'').toLowerCase().includes(String(needle||'').toLowerCase()); }
+function hasTags(obj){ if(!SELECTED_TAGS.size) return true; const t=new Set(obj.tags||obj.tags?.name?[obj.tags.name]:obj.tags||[]); for(const tag of SELECTED_TAGS){ if(t.has(tag)) return true; } return false; }
+function filterList(list){
+  const q=(document.querySelector('#q').value||'').trim().toLowerCase();
+  const c=(document.querySelector('#country').value||'').trim().toLowerCase();
+  const s=(document.querySelector('#skills').value||'').trim().toLowerCase();
+  return list.filter(it=>{
+    const okQ = !q || matchText(it.title||it.name||it.desc||it.story,q) || (it.tags||[]).some(t=>matchText(t,q)) || matchText((it.skills||[]).join(','),q) || matchText(it.country,q);
+    const okC = !c || matchText(it.country,c);
+    const okS = !s || matchText((it.skills||[]).join(','),s);
+    const okT = hasTags(it);
+    return okQ && okC && okS && okT;
+  });
+}
+
+/* ====== Options attach + Plan modal ====== */
+async function attachOption(slug){
+  ATTACHED.add(slug);
+  const b = document.querySelector('#attachedOptions');
+  if(b){ const s=el('span',{className:'chip',textContent:slug}); b.appendChild(s); }
+}
+function openPlanModal(existing){
+  const dlg=document.querySelector('#modalPlan'); document.querySelector('#modalPlanTitle').textContent=existing?'Edit Plan':'New Plan';
+  ATTACHED = new Set(existing?.options||[]);
+  document.querySelector('#attachedOptions').innerHTML='';
+  ATTACHED.forEach(s=>document.querySelector('#attachedOptions').appendChild(el('span',{className:'chip',textContent:s})));
+  planTitle.value=existing?.title||'';
+  planCountry.value=existing?.country||'';
+  planTags.value=(existing?.tags||[]).join(', ');
+  planSkills.value=(existing?.skills||[]).join(', ');
+  planStory.value=existing?.story||'';
+  planNeeds.value=existing?.needs||'';
+  planFunding.value=(existing?.funding||[]).join('\n');
+  dlg.showModal();
+  document.querySelector('#savePlan').onclick=async(e)=>{
+    e.preventDefault();
+    const now=Date.now();
+    const plan = {
+      id: existing?.id || undefined,
+      title: planTitle.value.trim(),
+      country: planCountry.value.trim(),
+      tags: csv(planTags.value),
+      skills: csv(planSkills.value),
+      story: planStory.value,
+      needs: planNeeds.value,
+      funding: lines(planFunding.value),
+      options: Array.from(ATTACHED),
+      star: existing?.star||false,
+      updated: now
+    };
+    if(!plan.title){ alert('Title required.'); return; }
+    await idb.put('plans', plan);
+    dlg.close();
+    renderAll();
+  };
+}
+
+/* ====== Profile ====== */
+async function openProfile(){
+  const dlg=document.querySelector('#modalProfile');
+  const p=PROFILE || {};
+  profName.value=p?.name||'';
+  profMnemonic.value=p?.mnemonic||words(3);
+  donInterac.value=p?.routes?.interac||'';
+  donBTC.value=p?.routes?.btc||'';
+  donETH.value=p?.routes?.eth||'';
+  donSOL.value=p?.routes?.sol||'';
+  dlg.showModal();
+  document.querySelector('#saveProfile').onclick=async(e)=>{
+    e.preventDefault();
+    PROFILE = {
+      k:'me',
+      name: profName.value.trim() || 'Anonymous Teacher',
+      mnemonic: profMnemonic.value.trim() || words(3),
+      routes: {
+        interac: donInterac.value.trim(),
+        btc: donBTC.value.trim(),
+        eth: donETH.value.trim(),
+        sol: donSOL.value.trim()
+      }
+    };
+    await idb.put('profile', PROFILE);
+    dlg.close();
+  };
+}
+
+/* ====== Publish (local hash routes) ====== */
+async function publishPlan(p){
+  const id = p.id ?? await idb.put('plans', p);
+  history.pushState({}, '', toHashLink('plan', id));
+  route();
+}
+async function route(){
+  const r=fromHash();
+  const v=document.querySelector('#viewer');
+  if(!r){ v.style.display='none'; return; }
+  if(r.type==='plan'){
+    const plan = await idb.get('plans', Number(r.id));
+    if(!plan){ v.style.display='none'; return; }
+    vTitle.textContent=plan.title;
+    vMeta.textContent=[plan.country, (plan.skills||[]).join(', '), new Date(plan.updated).toLocaleString()].filter(Boolean).join(' · ');
+    vStory.textContent=plan.story||'';
+    vNeeds.textContent=plan.needs||'';
+    const f=vFunding; f.innerHTML='';
+    const routes = PROFILE?.routes||{};
+    const merged = [...(plan.funding||[])];
+    if(routes.interac) merged.unshift('interac: '+routes.interac);
+    if(routes.btc) merged.unshift('btc: '+routes.btc);
+    if(routes.eth) merged.unshift('eth: '+routes.eth);
+    if(routes.sol) merged.unshift('sol: '+routes.sol);
+    merged.forEach(line=>{
+      const li=el('li',{}); 
+      if(line.includes('http')){ const a=el('a',{href:line,target:'_blank',textContent:line}); li.appendChild(a); }
+      else { li.textContent=line; }
+      f.appendChild(li);
+    });
+    const t=vTags; t.innerHTML=''; (plan.tags||[]).forEach(tag=>t.appendChild(el('span',{className:'chip',textContent:tag})));
+    const o=vOptions; o.innerHTML='';
+    for(const s of (plan.options||[])){ o.appendChild(el('span',{className:'chip',textContent:s})); }
+    v.style.display='block';
+    v.scrollIntoView({behavior:'smooth'});
+  }
+}
+
+/* ====== Import/Export ====== */
+async function exportData(){
+  const data = {
+    profile: await idb.get('profile','me'),
+    plans: await idb.getAll('plans'),
+    options: await idb.getAll('options'),
+    tags: await idb.getAll('tags'),
+    ts: Date.now()
+  };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = el('a',{href:url, download:`teacher-uplift-${new Date().toISOString().slice(0,10)}.json`});
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+async function importData(){
+  const inp = el('input',{type:'file',accept:'application/json'});
+  inp.onchange=async()=>{
+    const file=inp.files[0]; if(!file) return;
+    const txt=await file.text();
+    const data=JSON.parse(txt);
+    if(data.profile) await idb.put('profile', {...data.profile, k:'me'});
+    if(Array.isArray(data.options)) for(const o of data.options) await idb.put('options', o);
+    if(Array.isArray(data.tags)) for(const t of data.tags) await idb.put('tags', t);
+    if(Array.isArray(data.plans)) for(const p of data.plans) await idb.put('plans', p);
+    PROFILE = await idb.get('profile','me');
+    renderAll();
+    alert('Imported successfully.');
+  };
+  inp.click();
+}
+</script>
+
+<!-- =========================================
+     [PART-01 END] — Keep only one footer on concat
+============================================= -->
+<footer class="wrap small muted" role="contentinfo" style="margin:24px 0 48px">
+  Built local-first. No tracking, no signup, just help. 🌱
+</footer>
+</body>
+</html>

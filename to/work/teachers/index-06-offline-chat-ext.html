@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- =========================================
+       [PART-06 | OFFLINE + A11y + THEMES + CHAT]
+       If concatenating, keep only Part-01 <head>.
+  ============================================== -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PRA Teacher Uplift — Offline & Extensions</title>
+  <meta name="theme-color" content="#0b1b2b">
+  <link rel="icon" href="data:,">
+  <style>
+    :root{
+      --bg:#07121b; --card:#0e2436; --ink:#e8f0f6; --muted:#a6bdc9; --accent:#73ffd2;
+      --chip:#11324b; --chip2:#2a4861; --rule:#15344a; --focus:#9be7ff; --call:#0c2233;
+    }
+    /* High-contrast theme variables override */
+    :root[data-theme="contrast"]{
+      --bg:#000; --card:#0b0b0b; --ink:#fff; --muted:#c8c8c8; --accent:#00ffff;
+      --chip:#111; --chip2:#222; --rule:#333; --focus:#ffff00; --call:#0f0f0f;
+    }
+    /* Thin mode (text-first) */
+    :root[data-theme="thin"]{
+      --bg:#ffffff; --card:#ffffff; --ink:#111; --muted:#444; --accent:#0b4c6e;
+      --chip:#f2f6f9; --chip2:#e8eef3; --rule:#d9e5ef; --focus:#0b4c6e; --call:#ffffff;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,Segoe UI,Roboto,Ubuntu,Arial}
+    a{color:var(--accent)} a:hover{opacity:.9}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px}
+    .card{background:var(--card);border:1px solid var(--rule);border-radius:16px;padding:16px;box-shadow:0 6px 24px rgba(0,0,0,.25);margin:12px 0}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .col{flex:1 1 260px}
+    .right{margin-left:auto}
+    .btn{appearance:none;border:2px solid #1f4965;background:#10334b;color:var(--ink);padding:.55rem .8rem;border-radius:12px;cursor:pointer}
+    .btn:hover{filter:brightness(1.07)}
+    .btn-ghost{background:transparent;border-color:#274f6b}
+    .btn-primary{background:linear-gradient(90deg,#0f586e,#0f3f6e)}
+    input,select,textarea{width:100%;padding:.6rem;border-radius:12px;border:1px solid #21445c;background:#0c1f30;color:var(--ink)}
+    .small{font-size:.9rem} .muted{color:var(--muted)}
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{background:var(--chip);border:1px solid #1c4058;padding:.25rem .55rem;border-radius:24px;font-size:.85rem}
+    .pill{display:inline-block;background:#0c2233;border:1px solid #244a64;border-radius:999px;padding:.2rem .55rem;font-size:.8rem}
+    pre{white-space:pre-wrap;word-wrap:break-word;background:#0b1f2e;border:1px solid #244a64;border-radius:12px;padding:10px}
+    progress{width:180px;height:16px}
+    /* A11y helpers */
+    :focus{outline:3px solid var(--focus);outline-offset:2px}
+    .skip{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden}
+    .skip:focus{left:8px;top:8px;width:auto;height:auto;background:#002b36;color:#fff;padding:.4rem .6rem;border-radius:8px;z-index:1000}
+    @media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto !important; animation:none !important; transition:none !important} }
+    /* Thin mode typography */
+    :root[data-theme="thin"] .card{box-shadow:none;border-color:#d9e5ef}
+  </style>
+</head>
+<body>
+<a href="#main" class="skip">Skip to content</a>
+<main class="wrap" id="main">
+  <!-- =========================================
+       [PART-06] — Header & Theme Switcher
+  ============================================== -->
+  <section class="card" role="region" aria-label="Header">
+    <div class="row">
+      <div>
+        <h1>Offline, Accessibility, Themes & Chat</h1>
+        <div class="muted small">Prefetch assets for offline, export thin snapshots, improve accessibility, switch themes, and manage chat rooms.</div>
+      </div>
+      <div class="right row" role="toolbar" aria-label="Theme controls">
+        <label class="small">Theme</label>
+        <select id="themeSel" aria-label="Theme selector">
+          <option value="">Default</option>
+          <option value="contrast">High Contrast</option>
+          <option value="thin">Thin Mode (text-first)</option>
+        </select>
+        <button class="btn" id="btnPersistTheme" title="Save theme to profile">Save</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================
+       [PART-06] — Offline Cache Builder
+  ============================================== -->
+  <section class="card" role="region" aria-label="Offline Cache Builder">
+    <div class="row">
+      <h2>Offline Cache Builder</h2>
+      <div class="right">
+        <button class="btn" id="btnDetect">Detect Common URLs</button>
+        <button class="btn btn-primary" id="btnCache">Cache Selected</button>
+        <button class="btn btn-ghost" id="btnClearCache">Clear Cache</button>
+      </div>
+    </div>
+    <div class="small muted">Choose URLs to prefetch into the browser’s Cache Storage so pages load without internet.</div>
+    <div class="row" style="margin-top:6px">
+      <textarea id="urlList" rows="6" placeholder="./index-01-shell-toc.html
+./index-02-catalog-deeppack.html
+./index-03-plan-builder-pro.html
+./index-04-publish-viewer-pro.html
+./index-05-profile-donations-guard.html
+./index-06-offline-chat-ext.html
+https://quickchart.io/qr?text=hello
+"></textarea>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <progress id="cacheProg" max="100" value="0" aria-label="Caching progress"></progress>
+      <div class="small muted" id="cacheMsg">Ready.</div>
+    </div>
+  </section>
+
+  <!-- =========================================
+       [PART-06] — Snapshot Exporter (Thin HTML)
+  ============================================== -->
+  <section class="card" role="region" aria-label="Snapshot Exporter">
+    <div class="row">
+      <h2>Snapshot Exporter <span class="pill">Self-contained thin viewer</span></h2>
+      <div class="right">
+        <button class="btn" id="btnBuildSnap">Build Snapshot of Plan</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <label for="snapPlan">Plan</label>
+        <select id="snapPlan"></select>
+      </div>
+      <div class="col">
+        <label for="snapQR">QR Target (optional)</label>
+        <input id="snapQR" placeholder="https://… or leave blank">
+      </div>
+      <div class="col">
+        <label>&nbsp;</label>
+        <button class="btn" id="btnDownloadSnap">Download HTML</button>
+      </div>
+    </div>
+    <details style="margin-top:8px">
+      <summary><strong>Preview (read-only)</strong></summary>
+      <iframe id="snapPreview" title="Snapshot preview" style="width:100%;height:360px;border:1px solid var(--rule);border-radius:12px;background:#fff"></iframe>
+    </details>
+  </section>
+
+  <!-- =========================================
+       [PART-06] — Accessibility Helpers
+  ============================================== -->
+  <section class="card" role="region" aria-label="Accessibility Helpers">
+    <h2>Accessibility Helpers</h2>
+    <ul class="small">
+      <li>Focus outlines always visible; keyboard users get a skip link (<kbd>Tab</kbd> at top).</li>
+      <li>Respects <em>prefers-reduced-motion</em> and increases contrast with the “High Contrast” theme.</li>
+      <li>Semantic roles and labels added across UI components.</li>
+    </ul>
+  </section>
+
+  <!-- =========================================
+       [PART-06] — Chat Presets (tlk.io)
+  ============================================== -->
+  <section class="card" role="region" aria-label="Chat Presets">
+    <div class="row">
+      <h2>Chat Presets <span class="pill">tlk.io</span></h2>
+      <div class="right">
+        <button class="btn" id="btnAddChat">Add Room</button>
+        <button class="btn" id="btnExportChat">Export</button>
+        <button class="btn" id="btnImportChat">Import</button>
+      </div>
+    </div>
+    <table class="small" id="chatTable" style="width:100%;border-collapse:collapse">
+      <thead><tr><th style="text-align:left;border-bottom:1px solid var(--rule)">Room</th><th style="text-align:left;border-bottom:1px solid var(--rule)">Embed</th><th style="text-align:left;border-bottom:1px solid var(--rule)">Actions</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <details style="margin-top:8px">
+      <summary><strong>How to use</strong></summary>
+      <div class="small muted">
+        Click “Open” to launch a room in a new tab, or “Embed” to get an <code>&lt;iframe&gt;</code> snippet to paste into File 1 (or your site).
+      </div>
+    </details>
+  </section>
+</main>
+
+<!-- =========================================
+     [PART-06] — Logic: DB, Theme, Cache, Snapshot, Chat
+============================================= -->
+<script>
+/* ===== Shared DB schema (compatible with Files 1–5) ===== */
+const DB_NAME='teacherUpliftDB', DB_VER=3;
+let db;
+function idbOpen(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open(DB_NAME,DB_VER);
+    req.onupgradeneeded=e=>{
+      const d=e.target.result;
+      if(!d.objectStoreNames.contains('plans')){
+        const s=d.createObjectStore('plans',{keyPath:'id',autoIncrement:true});
+        s.createIndex('by_title','title',{unique:false});
+      }
+      if(!d.objectStoreNames.contains('profile')) d.createObjectStore('profile',{keyPath:'k'});
+      if(!d.objectStoreNames.contains('options')) d.createObjectStore('options',{keyPath:'slug'});
+      if(!d.objectStoreNames.contains('tags')) d.createObjectStore('tags',{keyPath:'name'});
+      if(!d.objectStoreNames.contains('analytics')){ const a=d.createObjectStore('analytics',{keyPath:'k'}); a.createIndex('by_plan','plan',{unique:false}); }
+      if(!d.objectStoreNames.contains('events')){ const eStore=d.createObjectStore('events',{keyPath:'id',autoIncrement:true}); eStore.createIndex('by_plan','plan',{unique:false}); }
+      if(!d.objectStoreNames.contains('audits')) d.createObjectStore('audits',{keyPath:'id',autoIncrement:true});
+      if(!d.objectStoreNames.contains('verifications')) d.createObjectStore('verifications',{keyPath:'id',autoIncrement:true});
+      if(!d.objectStoreNames.contains('chats')) d.createObjectStore('chats',{keyPath:'room'});
+    };
+    req.onsuccess=e=>{db=e.target.result;res(db);}
+    req.onerror=e=>rej(e.target.error);
+  });
+}
+function tx(name,mode='readonly'){return db.transaction(name,mode).objectStore(name);}
+const idb = {
+  async getAll(store){return new Promise((res,rej)=>{const r=tx(store).getAll(); r.onsuccess=()=>res(r.result||[]); r.onerror=()=>rej(r.error);});},
+  async get(store,key){return new Promise((res,rej)=>{const r=tx(store).get(key); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});},
+  async put(store,val){return new Promise((res,rej)=>{const r=tx(store,'readwrite').put(val); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});},
+  async delete(store,key){return new Promise((res,rej)=>{const r=tx(store,'readwrite').delete(key); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error);});}
+};
+
+/* ===== Globals ===== */
+const $=sel=>document.querySelector(sel);
+function el(t,p){const e=document.createElement(t); Object.assign(e,p||{}); return e;}
+function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]));}
+let PROFILE=null, PLANS=[];
+
+/* ===== Boot ===== */
+(async function(){
+  await idbOpen();
+  PROFILE = await idb.get('profile','me');
+  PLANS = await idb.getAll('plans');
+  initTheme();
+  bindTheme();
+  bindCache();
+  bindSnapshot();
+  bindChat();
+})();
+function initTheme(){
+  const t = (PROFILE && PROFILE.theme) || '';
+  document.documentElement.setAttribute('data-theme', t);
+  $('#themeSel').value = t || '';
+}
+
+/* ===== Theme ===== */
+function bindTheme(){
+  $('#themeSel').addEventListener('change', ()=>{
+    document.documentElement.setAttribute('data-theme', $('#themeSel').value || '');
+  });
+  $('#btnPersistTheme').addEventListener('click', async ()=>{
+    PROFILE = (await idb.get('profile','me')) || {k:'me', name:'Anonymous Teacher', routes:{}};
+    PROFILE.theme = $('#themeSel').value || '';
+    await idb.put('profile', PROFILE);
+    alert('Theme saved ✔');
+  });
+}
+
+/* ===== Offline Cache Builder ===== */
+function bindCache(){
+  $('#btnDetect').addEventListener('click', ()=>{
+    // Try to auto-detect sibling HTML files referenced in the TOC:
+    const base = location.pathname.replace(/[^/]+$/,'');
+    const defaults = [
+      'index-01-shell-toc.html','index-02-catalog-deeppack.html','index-03-plan-builder-pro.html',
+      'index-04-publish-viewer-pro.html','index-05-profile-donations-guard.html','index-06-offline-chat-ext.html'
+    ].map(x=>base+x);
+    $('#urlList').value = defaults.join('\n');
+  });
+  $('#btnCache').addEventListener('click', async ()=>{
+    if(!('caches' in window)){ alert('Cache API not available in this browser.'); return; }
+    const urls = $('#urlList').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    if(!urls.length){ alert('No URLs provided.'); return; }
+    const cache = await caches.open('teacher-uplift-offline-pack');
+    let done=0;
+    for(const u of urls){
+      try{
+        const res = await fetch(u, {mode:'no-cors'}).catch(()=>null);
+        if(res){ await cache.put(u, res); }
+      }catch(_){}
+      done++;
+      $('#cacheProg').value = Math.round(100*done/urls.length);
+      $('#cacheMsg').textContent = `Cached ${done}/${urls.length}`;
+    }
+    $('#cacheMsg').textContent += ' — Complete ✔';
+  });
+  $('#btnClearCache').addEventListener('click', async ()=>{
+    const keys = await caches.keys();
+    for(const k of keys){ if(k.startsWith('teacher-uplift')) await caches.delete(k); }
+    $('#cacheProg').value = 0; $('#cacheMsg').textContent = 'Caches cleared.';
+  });
+}
+
+/* ===== Snapshot Exporter (self-contained thin viewer) ===== */
+function bindSnapshot(){
+  const sel=$('#snapPlan'); sel.innerHTML='';
+  if(!PLANS.length){ sel.appendChild(el('option',{value:'',textContent:'No plans found — create in File 1'})); }
+  else{
+    PLANS.sort((a,b)=> (a.title||'').localeCompare(b.title||'')); 
+    PLANS.forEach(p=> sel.appendChild(el('option',{value:String(p.id),textContent:`#${p.id} — ${p.title}`})));
+  }
+  $('#btnBuildSnap').addEventListener('click', previewSnapshot);
+  $('#btnDownloadSnap').addEventListener('click', downloadSnapshot);
+}
+function buildThinHTML(plan, qr){
+  const routes = (PROFILE&&PROFILE.routes)||{};
+  const funding = [
+    routes.interac?`interac: ${routes.interac}`:'',
+    routes.btc?`btc: ${routes.btc}`:'',
+    routes.eth?`eth: ${routes.eth}`:'',
+    routes.sol?`sol: ${routes.sol}`:'',
+    routes.xmr?`xmr: ${routes.xmr}`:''
+  ].filter(Boolean).concat(plan.funding||[]);
+  const qrTag = qr ? `<img alt="QR" src="https://quickchart.io/qr?text=${encodeURIComponent(qr)}&size=300&margin=2" style="max-width:160px;border:1px solid #ddd;border-radius:8px">` : '';
+  return `<!DOCTYPE html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escapeHtml(plan.title||'Plan')}</title>
+<style>
+  body{font:16px/1.6 system-ui,Segoe UI,Roboto,Arial;margin:0;color:#111;background:#fff}
+  .wrap{max-width:860px;margin:0 auto;padding:20px}
+  h1{margin:0 0 6px;font-size:1.6rem}
+  h2{margin:14px 0 6px;font-size:1.1rem}
+  .muted{color:#555}
+  .chip{display:inline-block;background:#eef6fb;border:1px solid #d9e5ef;border-radius:999px;padding:.15rem .45rem;margin:2px;font-size:.8rem}
+  pre{white-space:pre-wrap;background:#f7fbff;border:1px solid #e5eff7;border-radius:10px;padding:10px}
+  table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid #eee;padding:6px}
+  @media print{a{color:#000;text-decoration:underline}}
+</style>
+<body><div class="wrap">
+<h1>${escapeHtml(plan.title||'Plan')}</h1>
+<div class="muted">${escapeHtml(plan.country||'')}</div>
+
+<h2>Story</h2>
+<div>${escapeHtml(plan.story||'')}</div>
+${(plan.tags&&plan.tags.length)? `<div>${plan.tags.map(t=>`<span class="chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
+
+<h2>Needs</h2>
+<pre>${escapeHtml(plan.needs||'')}</pre>
+
+<h2>Funding</h2>
+<ul>${funding.map(f=> `<li>${escapeHtml(f)}</li>`).join('')}</ul>
+
+${(plan.options&&plan.options.length)? `<h2>Options</h2><div>${plan.options.map(s=>`<span class="chip">${escapeHtml(s)}</span>`).join('')}</div>`:''}
+${qrTag ? `<h2>Share</h2>${qrTag}`:''}
+
+<footer class="muted" style="margin-top:20px">Built from PRA Teacher Uplift (thin snapshot). Updated ${new Date(plan.updated||Date.now()).toLocaleString()}</footer>
+</div></body></html>`;
+}
+async function previewSnapshot(){
+  const id = Number($('#snapPlan').value);
+  if(!id){ alert('Select a plan first.'); return; }
+  const plan = await idb.get('plans', id);
+  const html = buildThinHTML(plan, $('#snapQR').value.trim());
+  const doc = $('#snapPreview').contentWindow.document;
+  doc.open(); doc.write(html); doc.close();
+}
+async function downloadSnapshot(){
+  const id = Number($('#snapPlan').value);
+  if(!id){ alert('Select a plan first.'); return; }
+  const plan = await idb.get('plans', id);
+  const html = buildThinHTML(plan, $('#snapQR').value.trim());
+  const blob = new Blob([html], {type:'text/html'});
+  const a = el('a',{href:URL.createObjectURL(blob), download:`plan-${plan.id}-snapshot.html`});
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+}
+
+/* ===== Chat Presets (tlk.io) ===== */
+async function bindChat(){
+  const tbody = $('#chatTable tbody');
+  async function refresh(){
+    const rows = await idb.getAll('chats');
+    tbody.innerHTML='';
+    rows.forEach(r=>{
+      const tr=el('tr',{});
+      const room = r.room;
+      tr.appendChild(el('td',{textContent:room}));
+      tr.appendChild(el('td',{})).appendChild(el('code',{textContent:`<iframe src="https://tlk.io/${room}" style="width:360px;height:480px;border:0"></iframe>`}));
+      const tdAct=el('td',{});
+      const open=el('button',{className:'btn',textContent:'Open'}); open.onclick=()=>window.open(`https://tlk.io/${room}`,'_blank');
+      const embed=el('button',{className:'btn',textContent:'Copy Embed'}); embed.onclick=()=>navigator.clipboard.writeText(`<iframe src="https://tlk.io/${room}" style="width:360px;height:480px;border:0"></iframe>`);
+      const del=el('button',{className:'btn',textContent:'Delete'}); del.onclick=async()=>{ await idb.delete('chats', room); refresh(); };
+      tdAct.append(open, embed, del); tr.appendChild(tdAct);
+      tbody.appendChild(tr);
+    });
+  }
+  $('#btnAddChat').addEventListener('click', async ()=>{
+    const room = prompt('New tlk.io room name (letters, numbers, dashes).','teacher-uplift')||'';
+    if(!room) return;
+    await idb.put('chats',{room});
+    refresh();
+  });
+  $('#btnExportChat').addEventListener('click', async ()=>{
+    const rows = await idb.getAll('chats');
+    const blob = new Blob([JSON.stringify(rows,null,2)], {type:'application/json'});
+    const a = el('a',{href:URL.createObjectURL(blob), download:`chats-${new Date().toISOString().slice(0,10)}.json`});
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+  });
+  $('#btnImportChat').addEventListener('click', async ()=>{
+    const inp=el('input',{type:'file',accept:'application/json'}); inp.onchange=async()=>{
+      const f=inp.files[0]; if(!f) return; const txt=await f.text(); const rows=JSON.parse(txt);
+      for(const r of rows){ if(r.room) await idb.put('chats',{room:r.room}); }
+      refresh();
+    }; inp.click();
+  });
+  refresh();
+}
+</script>
+
+<!-- =========================================
+     [PART-06 END]
+============================================= -->
+</body>
+</html>

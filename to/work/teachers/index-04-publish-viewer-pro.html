@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- =========================================
+       [PART-04 | PUBLISH-VIEWER-PRO] — Metadata
+       If concatenating, remove this <head> and keep only Part-01 <head>.
+  ============================================== -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PRA Teacher Uplift — Publish & Viewer Pro</title>
+  <meta name="theme-color" content="#0b1b2b">
+  <link rel="icon" href="data:,">
+  <style>
+    :root{
+      --bg:#061019; --paper:#0b1e2d; --ink:#e7f1f7; --muted:#9fb7c6; --accent:#73ffd2;
+      --rule:#12344a; --chip:#11324b; --chip2:#2a4861; --call:#0c2233;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:17px/1.6 ui-sans-serif,system-ui,Segoe UI,Roboto,Ubuntu,Arial}
+    a{color:var(--accent)} a:hover{opacity:.9}
+    .wrap{max-width:880px;margin:0 auto;padding:20px}
+    .viewer{background:var(--paper);border:1px solid var(--rule);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.28);overflow:hidden}
+    header.viewer-head{display:flex;gap:12px;align-items:center;padding:16px 16px;border-bottom:1px solid var(--rule);background:linear-gradient(180deg,rgba(11,30,45,.7),rgba(11,30,45,.4))}
+    header h1{font-size:1.4rem;margin:0}
+    .muted{color:var(--muted)}
+    .body{padding:18px}
+    .grid{display:grid;grid-template-columns:1.6fr .9fr;gap:18px}
+    .card{background:var(--call);border:1px solid var(--rule);border-radius:14px;padding:12px}
+    .chips{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{background:var(--chip);border:1px solid #1c4058;padding:.25rem .55rem;border-radius:24px;font-size:.85rem}
+    .pill{display:inline-block;background:#0c2233;border:1px solid #244a64;border-radius:999px;padding:.2rem .55rem;font-size:.8rem}
+    .btn{appearance:none;border:1px solid #1f4965;background:#10334b;color:var(--ink);padding:.5rem .75rem;border-radius:12px;cursor:pointer}
+    .btn:hover{filter:brightness(1.07)}
+    .btn-ghost{background:transparent;border-color:#274f6b}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .right{margin-left:auto}
+    .copybox{display:flex;gap:6px}
+    input.inline{flex:1 1 auto;min-width:220px;padding:.5rem;border-radius:10px;border:1px solid #21445c;background:#0c1f30;color:var(--ink)}
+    pre{white-space:pre-wrap;word-wrap:break-word;background:#0b1f2e;border:1px solid #244a64;border-radius:12px;padding:10px;margin:0}
+    .num{font-variant-numeric:tabular-nums}
+    footer{padding:16px;border-top:1px dashed var(--rule);margin-top:16px;color:var(--muted)}
+    @media (max-width:860px){ .grid{grid-template-columns:1fr} }
+    /* Print / public handout */
+    @media print{
+      body{background:white;color:#111}
+      .viewer, .card{border-color:#dbe8f2;box-shadow:none;background:white}
+      header.viewer-head{background:white;border-bottom-color:#dbe8f2}
+      a{color:#0b4c6e}
+      .no-print{display:none!important}
+    }
+  </style>
+</head>
+<body>
+<main class="wrap" id="app">
+  <!-- =========================================
+       [PART-04] — Header + TOC nav
+  ============================================== -->
+  <section class="row no-print" style="margin-bottom:12px">
+    <a class="btn btn-ghost" href="index-01-shell-toc.html">Back to TOC</a>
+    <span class="muted">Read-only viewer for sharing and printing.</span>
+  </section>
+
+  <!-- =========================================
+       [PART-04] — Viewer
+  ============================================== -->
+  <article class="viewer" id="viewer" aria-live="polite" aria-busy="true" hidden>
+    <header class="viewer-head">
+      <div style="flex:1 1 auto">
+        <h1 id="vTitle">—</h1>
+        <div class="muted" id="vMeta">—</div>
+      </div>
+      <div class="row right no-print" role="toolbar" aria-label="Share actions">
+        <button class="btn" id="btnShare">Share</button>
+        <button class="btn" id="btnCopy">Copy Link</button>
+        <button class="btn btn-ghost" id="btnPrint">Print</button>
+      </div>
+    </header>
+
+    <div class="body">
+      <div class="grid">
+        <section>
+          <div class="card">
+            <h2>Story</h2>
+            <div id="vStory"></div>
+            <div class="chips" id="vTags" style="margin-top:6px"></div>
+          </div>
+
+          <div class="card">
+            <h2>Needs</h2>
+            <pre id="vNeeds"></pre>
+          </div>
+
+          <div class="card">
+            <h2>Options</h2>
+            <div class="chips" id="vOptions"></div>
+          </div>
+        </section>
+
+        <aside>
+          <div class="card">
+            <h2>Funding</h2>
+            <ul id="vFunding" style="margin:0 0 8px 18px"></ul>
+            <div class="chips" id="vSkills"></div>
+          </div>
+
+          <div class="card">
+            <h2>Permalinks</h2>
+            <div class="row copybox" style="margin-bottom:8px">
+              <input class="inline" id="linkFull" readonly>
+              <button class="btn" data-copy="#linkFull">Copy</button>
+            </div>
+            <div class="row copybox" style="margin-bottom:8px">
+              <input class="inline" id="linkShort" readonly>
+              <button class="btn" data-copy="#linkShort">Copy</button>
+            </div>
+            <div class="row copybox">
+              <input class="inline" id="linkMnemonic" readonly>
+              <button class="btn" data-copy="#linkMnemonic">Copy</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Attribution</h2>
+            <div class="muted small">Built with PRA Teacher Uplift (local-first). No accounts, no tracking beacons.</div>
+          </div>
+
+          <div class="card">
+            <h2>Local Analytics</h2>
+            <div class="row">
+              <div><span class="pill">Views</span></div>
+              <div class="right num" id="aViews">0</div>
+            </div>
+            <div class="row">
+              <div><span class="pill">Avg Dwell (s)</span></div>
+              <div class="right num" id="aDwell">0</div>
+            </div>
+            <div class="row">
+              <div><span class="pill">Last Referrer</span></div>
+              <div class="right" id="aRef">—</div>
+            </div>
+            <details style="margin-top:8px">
+              <summary><strong>Raw Events</strong></summary>
+              <pre id="aRaw" style="max-height:180px;overflow:auto"></pre>
+            </details>
+          </div>
+        </aside>
+      </div>
+
+      <footer class="row">
+        <div class="muted small">Permalink is device-local friendly. For a public landing page, export a One-Pager from File 3 or host the Shell (File 1) + this Viewer.</div>
+        <div class="right muted small">Updated <span id="vUpdated">—</span></div>
+      </footer>
+    </div>
+  </article>
+
+  <!-- Fallback when no plan id provided -->
+  <section class="card" id="empty" hidden>
+    <h2>Nothing to show yet</h2>
+    <div class="muted">Open File 1, create a plan, then use “Publish (Local)” or pass a hash like <code>#/plan/1</code> to this page.</div>
+  </section>
+</main>
+
+<!-- =========================================
+     [PART-04] — DB + Viewer Logic + Analytics
+============================================= -->
+<script>
+/* ===== Shared DB schema ===== */
+const DB_NAME='teacherUpliftDB', DB_VER=2; // bump to add analytics store
+let db;
+function idbOpen(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open(DB_NAME,DB_VER);
+    req.onupgradeneeded=e=>{
+      const d=e.target.result;
+      if(!d.objectStoreNames.contains('plans')){
+        const s=d.createObjectStore('plans',{keyPath:'id',autoIncrement:true});
+        s.createIndex('by_title','title',{unique:false});
+      }
+      if(!d.objectStoreNames.contains('profile')){
+        d.createObjectStore('profile',{keyPath:'k'});
+      }
+      if(!d.objectStoreNames.contains('options')){
+        d.createObjectStore('options',{keyPath:'slug'});
+      }
+      if(!d.objectStoreNames.contains('tags')){
+        d.createObjectStore('tags',{keyPath:'name'});
+      }
+      if(!d.objectStoreNames.contains('analytics')){
+        const a=d.createObjectStore('analytics',{keyPath:'k'});
+        a.createIndex('by_plan','plan',{unique:false});
+      }
+      if(!d.objectStoreNames.contains('events')){
+        const eStore=d.createObjectStore('events',{keyPath:'id',autoIncrement:true});
+        eStore.createIndex('by_plan','plan',{unique:false});
+      }
+    };
+    req.onsuccess=e=>{db=e.target.result;res(db);}
+    req.onerror=e=>rej(e.target.error);
+  });
+}
+function tx(store,mode='readonly'){return db.transaction(store,mode).objectStore(store);}
+const idb = {
+  async get(store,key){return new Promise((res,rej)=>{const r=tx(store).get(key); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});},
+  async put(store,val){return new Promise((res,rej)=>{const r=tx(store,'readwrite').put(val); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});},
+  async add(store,val){return new Promise((res,rej)=>{const r=tx(store,'readwrite').add(val); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});},
+  async getAllByIndex(store,idx,query){return new Promise((res,rej)=>{const r=tx(store).index(idx).getAll(query); r.onsuccess=()=>res(r.result||[]); r.onerror=()=>rej(r.error);});}
+};
+
+/* ===== Helpers ===== */
+const $=sel=>document.querySelector(sel);
+function el(tag,props){const e=document.createElement(tag);Object.assign(e,props||{});return e;}
+function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]));}
+function fromHash(){const m=location.hash.match(/^#\/plan\/(\d+)/); return m?Number(m[1]):null;}
+function shortHash(n){ // deterministic short code from id
+  const s = btoa(String(n)).replace(/=+/,'').replace(/\+/g,'-').replace(/\//g,'_');
+  return s;
+}
+function toMnemonic(n){ const words=['moss','root','lumen','weave','atlas','harbor','seed','ember','delta','pulse','forge','kind','quiet','nova','arc','kin','terra','echo','spire','garden','compass']; return words[n%words.length]+'-'+words[(n*7)%words.length]+'-'+n; }
+
+/* ===== App State ===== */
+let PROFILE=null, PLAN=null, VIEW_START=0;
+
+/* ===== Boot ===== */
+(async function(){
+  await idbOpen();
+  PROFILE = await idb.get('profile','me');
+  const id = fromHash();
+  if(!id){ $('#empty').hidden=false; return; }
+  const plan = await idb.get('plans', id);
+  if(!plan){ $('#empty').hidden=false; return; }
+  PLAN = plan;
+  render(plan);
+  await bumpView(plan.id);
+  VIEW_START = performance.now();
+  window.addEventListener('beforeunload', recordDwell);
+  window.addEventListener('hashchange', ()=>location.reload());
+})();
+
+/* ===== Render ===== */
+function render(p){
+  $('#viewer').hidden=false; $('#viewer').setAttribute('aria-busy','false');
+  $('#vTitle').textContent=p.title||'Plan';
+  $('#vMeta').textContent=[p.country,(p.skills||[]).join(', '),'Updated '+new Date(p.updated||Date.now()).toLocaleString()].filter(Boolean).join(' · ');
+  $('#vStory').textContent=p.story||'';
+  $('#vNeeds').textContent=p.needs||'';
+  $('#vUpdated').textContent=new Date(p.updated||Date.now()).toLocaleString();
+
+  const t=$('#vTags'); t.innerHTML=''; (p.tags||[]).forEach(tag=>t.appendChild(el('span',{className:'chip',textContent:tag})));
+  const o=$('#vOptions'); o.innerHTML=''; (p.options||[]).forEach(s=>o.appendChild(el('span',{className:'chip',textContent:s})));
+  const skills=$('#vSkills'); skills.innerHTML=''; (p.skills||[]).forEach(s=>skills.appendChild(el('span',{className:'chip',textContent:s})));
+
+  // funding: merge profile routes + plan-specific
+  const f=$('#vFunding'); f.innerHTML='';
+  const routes = PROFILE?.routes||{};
+  const merged = [
+    routes.interac?('interac: '+routes.interac):'',
+    routes.btc?('btc: '+routes.btc):'',
+    routes.eth?('eth: '+routes.eth):'',
+    routes.sol?('sol: '+routes.sol):'',
+    ...(p.funding||[])
+  ].filter(Boolean);
+  merged.forEach(line=>{
+    const li=el('li',{}); 
+    if(line.includes('http')){ li.appendChild(el('a',{href:line,target:'_blank',textContent:line})); }
+    else { li.textContent=line; }
+    f.appendChild(li);
+  });
+
+  // links
+  const full = location.origin + location.pathname.replace(/[^/]+$/,'') + 'index-04-publish-viewer-pro.html#' + encodeURIComponent(`/plan/${p.id}`);
+  $('#linkFull').value = full;
+  $('#linkShort').value = location.origin + location.pathname.replace(/[^/]+$/,'') + shortHash(p.id);
+  $('#linkMnemonic').value = toMnemonic(p.id);
+
+  // Actions
+  $('#btnPrint').onclick = ()=>window.print();
+  $('#btnCopy').onclick = ()=>navigator.clipboard.writeText($('#linkFull').value);
+  $('#btnShare').onclick = async ()=>{
+    const title = p.title||'Plan';
+    const url = $('#linkFull').value;
+    const text = `${title} — ${p.country||''}`;
+    if(navigator.share){ try{ await navigator.share({title,text,url}); }catch(_){} }
+    else { await navigator.clipboard.writeText(url); alert('Link copied.'); }
+  };
+  $$('button[data-copy]').forEach(b=>{
+    b.onclick = ()=>{ const inp=$(b.getAttribute('data-copy')); if(inp) navigator.clipboard.writeText(inp.value); };
+  });
+}
+const $$=(sel)=>Array.from(document.querySelectorAll(sel));
+
+/* ===== Analytics (local) =====
+   - analytics store: one row per plan: {k:`plan:${id}`, plan:id, views, totalMs, lastRef, updated}
+   - events store: stream of view sessions {id, plan, t:'view'|'dwell', ms, ref, ts}
+*/
+async function bumpView(planId){
+  const k=`plan:${planId}`;
+  const rec = await idb.get('analytics', k) || {k, plan:planId, views:0, totalMs:0, lastRef:'', updated:Date.now()};
+  rec.views += 1;
+  rec.lastRef = document.referrer || '(direct)';
+  rec.updated = Date.now();
+  await idb.put('analytics', rec);
+  await idb.add('events', {plan:planId, t:'view', ms:0, ref:rec.lastRef, ts:Date.now()});
+  await showAnalytics(planId);
+}
+async function recordDwell(){
+  if(!PLAN) return;
+  const ms = Math.max(0, performance.now() - VIEW_START);
+  const k=`plan:${PLAN.id}`;
+  const rec = await idb.get('analytics', k) || {k, plan:PLAN.id, views:0, totalMs:0, lastRef:'', updated:Date.now()};
+  rec.totalMs += ms; rec.updated = Date.now();
+  await idb.put('analytics', rec);
+  await idb.add('events', {plan:PLAN.id, t:'dwell', ms:Math.round(ms), ref:document.referrer||'(direct)', ts:Date.now()});
+  // no await on showAnalytics here (page unloading)
+}
+async function showAnalytics(planId){
+  const k=`plan:${planId}`;
+  const rec = await idb.get('analytics', k) || {views:0,totalMs:0,lastRef:'—'};
+  const events = await idb.getAllByIndex('events','by_plan',planId);
+  $('#aViews').textContent = String(rec.views||0);
+  const avg = (rec.views>0) ? Math.round((rec.totalMs||0)/rec.views)/1000 : 0;
+  $('#aDwell').textContent = String(avg);
+  $('#aRef').textContent = rec.lastRef || '—';
+  $('#aRaw').textContent = events.slice(-50).map(e=>`${new Date(e.ts).toLocaleString()}  ${e.t}  ${e.ms||0}ms  ${e.ref||''}`).join('\n');
+}
+</script>
+
+<!-- =========================================
+     [PART-04 END]
+============================================= -->
+</body>
+</html>

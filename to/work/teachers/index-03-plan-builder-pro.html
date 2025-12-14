@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- =========================================
+       [PART-03 | PLAN-BUILDER-PRO] — Metadata
+       If concatenating, remove this <head> and keep only Part-01 <head>.
+  ============================================== -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PRA Teacher Uplift — Plan Builder Pro</title>
+  <meta name="theme-color" content="#0b1b2b">
+  <link rel="icon" href="data:,">
+  <style>
+    :root{
+      --bg:#07121b; --card:#0e2436; --ink:#e8f0f6; --muted:#a6bdc9; --accent:#73ffd2;
+      --chip:#11324b; --chip2:#2a4861;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+    a{color:var(--accent)} a:hover{opacity:.85}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px}
+    .card{background:var(--card);border:1px solid #0f334e;border-radius:16px;padding:16px;box-shadow:0 6px 24px rgba(0,0,0,.25);margin:12px 0}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .col{flex:1 1 260px}
+    .right{margin-left:auto}
+    .btn{appearance:none;border:1px solid #1f4965;background:#10334b;color:var(--ink);padding:.55rem .8rem;border-radius:12px;cursor:pointer}
+    .btn:hover{filter:brightness(1.08)}
+    .btn-primary{background:linear-gradient(90deg,#0f586e,#0f3f6e)}
+    input,select,textarea{width:100%;padding:.6rem;border-radius:12px;border:1px solid #21445c;background:#0c1f30;color:var(--ink)}
+    h1,h2,h3{margin:.2rem 0 .6rem} h1{font-size:1.6rem} h2{font-size:1.2rem}
+    .small{font-size:.9rem} .muted{color:var(--muted)}
+    .pill{display:inline-block;background:#0c2233;border:1px solid #244a64;border-radius:999px;padding:.2rem .55rem;font-size:.8rem}
+    .table{width:100%;border-collapse:collapse}
+    .table th,.table td{border-bottom:1px solid #15344a;padding:8px;vertical-align:top}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin:.25rem 0}
+    .chip{background:var(--chip);border:1px solid #1c4058;padding:.25rem .55rem;border-radius:24px;font-size:.85rem}
+    .ok{color:#8dffc1}
+    .warn{color:#ffd773}
+    .bad{color:#ff7b7b}
+    .kbd{font-family:ui-monospace,Consolas,monospace;background:#0b1f2e;border:1px solid #244a64;border-radius:6px;padding:.05rem .3rem}
+    @media (max-width:520px){ .table td[data-th]:before{content:attr(data-th) ": ";font-weight:bold;display:block;color:#a6bdc9} .table thead{display:none} .table tr{display:block;margin:8px 0} .table td{display:block;border:none;border-bottom:1px solid #15344a} }
+    /* Print one-pager theme */
+    @media print {
+      body{background:white;color:#111}
+      .card, .wrap{box-shadow:none;border:none}
+      .no-print{display:none !important}
+      .print-only{display:block !important}
+    }
+    .print-only{display:none}
+  </style>
+</head>
+<body>
+<main class="wrap" id="app">
+  <!-- =========================================
+       [PART-03] — Header
+  ============================================== -->
+  <section class="card">
+    <div class="row">
+      <div>
+        <h1>Plan Builder Pro <span class="pill">Checklists • Budget • Milestones</span></h1>
+        <div class="muted small">Attach tasks with dependencies, calculate budgets, set milestones, and export a printable one-pager with a QR link.</div>
+      </div>
+      <div class="right row no-print">
+        <a class="btn" href="index-01-shell-toc.html">Back to TOC</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================
+       [PART-03] — Plan Selector & Meta
+  ============================================== -->
+  <section class="card">
+    <div class="row">
+      <div class="col">
+        <label for="planSel">Select Plan</label>
+        <select id="planSel"></select>
+      </div>
+      <div class="col">
+        <label for="planLink">Permalink (hash)</label>
+        <div class="row">
+          <input id="planLink" readonly>
+          <button class="btn" id="btnCopyLink" title="Copy link">Copy</button>
+        </div>
+      </div>
+      <div class="col">
+        <label>&nbsp;</label>
+        <button class="btn btn-primary" id="btnSaveAll">Save All</button>
+      </div>
+    </div>
+    <div class="small muted" id="planMeta">—</div>
+  </section>
+
+  <!-- =========================================
+       [PART-03] — Checklist with Dependencies
+  ============================================== -->
+  <section class="card">
+    <div class="row">
+      <h2>Checklist & Dependencies</h2>
+      <div class="right no-print">
+        <button class="btn" id="btnAddTask">Add Task</button>
+        <button class="btn" id="btnAutoSort">Auto-Sort by Dependencies</button>
+      </div>
+    </div>
+    <table class="table" id="taskTable" aria-label="Tasks">
+      <thead>
+        <tr><th>Done</th><th>Task</th><th>Deps (IDs)</th><th>Owner</th><th>Due</th><th>Actions</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="small muted">Tip: Use dependency IDs to enforce order (e.g., Task 5 depends on 1,3).</div>
+  </section>
+
+  <!-- =========================================
+       [PART-03] — Budget Calculator
+  ============================================== -->
+  <section class="card">
+    <div class="row">
+      <h2>Budget</h2>
+      <div class="right no-print">
+        <button class="btn" id="btnAddBudget">Add Line</button>
+      </div>
+    </div>
+    <table class="table" id="budgetTable" aria-label="Budget">
+      <thead>
+        <tr><th>Item</th><th>Qty</th><th>Unit</th><th>Cost/Unit</th><th>Subtotal</th><th>Actions</th></tr>
+      </thead>
+      <tbody></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="4" class="right"><strong>Total</strong></td>
+          <td id="budgetTotal">0.00</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+    <div class="small muted">Budget is local-only and attached to the selected plan. Use Export (File 1) for full backups.</div>
+  </section>
+
+  <!-- =========================================
+       [PART-03] — Milestones
+  ============================================== -->
+  <section class="card">
+    <div class="row">
+      <h2>Milestones</h2>
+      <div class="right no-print">
+        <button class="btn" id="btnAddMilestone">Add Milestone</button>
+      </div>
+    </div>
+    <table class="table" id="milestoneTable" aria-label="Milestones">
+      <thead>
+        <tr><th>Milestone</th><th>Date</th><th>Status</th><th>Notes</th><th>Actions</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <!-- =========================================
+       [PART-03] — Export (Printable One-Pager + QR)
+  ============================================== -->
+  <section class="card">
+    <div class="row">
+      <h2>Export</h2>
+      <div class="right no-print">
+        <button class="btn" id="btnPreviewPrint">Preview One-Pager</button>
+        <button class="btn" id="btnDownloadHTML">Download One-Pager HTML</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <label>QR Link Target</label>
+        <input id="qrTarget" placeholder="Defaults to plan permalink (hash)">
+      </div>
+      <div class="col">
+        <label>QR Preview</label>
+        <div id="qrBox" class="row" style="align-items:center;gap:12px">
+          <img id="qrImg" alt="QR preview" style="max-width:140px;border-radius:8px;border:1px solid #244a64">
+          <span class="small muted">If offline, this will show as text on the one-pager.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================
+       [PART-03] — Print One-Pager Template (hidden)
+  ============================================== -->
+  <section class="print-only" id="printRoot"></section>
+</main>
+
+<!-- =========================================
+     [PART-03] — Shared DB + Logic (compatible with File-01)
+============================================= -->
+<script>
+/* ===== Shared DB schema ===== */
+const DB_NAME='teacherUpliftDB', DB_VER=1;
+let db;
+function idbOpen(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open(DB_NAME,DB_VER);
+    req.onupgradeneeded=e=>{
+      const d=e.target.result;
+      if(!d.objectStoreNames.contains('plans')){
+        const s=d.createObjectStore('plans',{keyPath:'id',autoIncrement:true});
+        s.createIndex('by_title','title',{unique:false});
+      }
+      if(!d.objectStoreNames.contains('profile')){
+        d.createObjectStore('profile',{keyPath:'k'});
+      }
+      if(!d.objectStoreNames.contains('options')){
+        d.createObjectStore('options',{keyPath:'slug'});
+      }
+      if(!d.objectStoreNames.contains('tags')){
+        d.createObjectStore('tags',{keyPath:'name'});
+      }
+    };
+    req.onsuccess=e=>{db=e.target.result;res(db);}
+    req.onerror=e=>rej(e.target.error);
+  });
+}
+function tx(store,mode='readonly'){return db.transaction(store,mode).objectStore(store);}
+const idb = {
+  async getAll(store){return new Promise((res,rej)=>{const r=tx(store).getAll(); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});},
+  async get(store,key){return new Promise((res,rej)=>{const r=tx(store).get(key); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});},
+  async put(store,val){return new Promise((res,rej)=>{const r=tx(store,'readwrite').put(val); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});},
+};
+
+/* ===== Helpers ===== */
+const $=sel=>document.querySelector(sel);
+function el(tag,props){const e=document.createElement(tag);Object.assign(e,props||{});return e;}
+function sum(arr,fn){return arr.reduce((a,x)=>a+(+fn(x)||0),0);}
+function money(n){return (isFinite(n)?(+n):0).toFixed(2);}
+function nowISO(){return new Date().toISOString().slice(0,16);}
+
+/* ===== App State ===== */
+let PLANS=[], PROFILE=null, CURRENT=null;
+
+/* ===== Boot ===== */
+(async function(){
+  await idbOpen();
+  PROFILE = await idb.get('profile','me');
+  PLANS = await idb.getAll('plans');
+  bindUI();
+  loadPlanSel();
+  updateQR();
+})();
+
+/* ===== UI Bindings ===== */
+function bindUI(){
+  $('#planSel').addEventListener('change', onPlanChange);
+  $('#btnCopyLink').addEventListener('click', copyLink);
+  $('#btnSaveAll').addEventListener('click', saveAll);
+  $('#btnAddTask').addEventListener('click', addTask);
+  $('#btnAutoSort').addEventListener('click', autoSort);
+  $('#btnAddBudget').addEventListener('click', addBudget);
+  $('#btnAddMilestone').addEventListener('click', addMilestone);
+  $('#btnPreviewPrint').addEventListener('click', previewPrint);
+  $('#btnDownloadHTML').addEventListener('click', downloadHTML);
+  $('#qrTarget').addEventListener('input', updateQR);
+}
+
+/* ===== Plan Selector + Meta ===== */
+function loadPlanSel(){
+  const sel=$('#planSel'); sel.innerHTML='';
+  if(!PLANS.length){ const opt=el('option',{value:'',textContent:'No plans found. Create one in File 1.'}); sel.appendChild(opt); return; }
+  PLANS.sort((a,b)=> (a.title||'').localeCompare(b.title||''));
+  for(const p of PLANS){
+    const opt=el('option',{value:String(p.id),textContent:`#${p.id} — ${p.title}`});
+    sel.appendChild(opt);
+  }
+  sel.value = sel.options[0].value;
+  onPlanChange();
+}
+async function onPlanChange(){
+  const id = Number($('#planSel').value);
+  CURRENT = await idb.get('plans', id);
+  if(!CURRENT){ $('#planMeta').textContent='—'; $('#planLink').value=''; return; }
+  if(!CURRENT.tasks) CURRENT.tasks=[];
+  if(!CURRENT.budget) CURRENT.budget=[];
+  if(!CURRENT.milestones) CURRENT.milestones=[];
+  $('#planMeta').textContent = [
+    CURRENT.country||'—',
+    (CURRENT.skills||[]).join(', ')||'—',
+    'Updated: '+new Date(CURRENT.updated||Date.now()).toLocaleString()
+  ].join(' · ');
+  const link = location.origin+location.pathname.replace(/[^/]+$/,'') + 'index-01-shell-toc.html#' + encodeURIComponent(`/plan/${CURRENT.id}`);
+  $('#planLink').value = link;
+  $('#qrTarget').placeholder = link;
+  renderTasks();
+  renderBudget();
+  renderMilestones();
+  updateQR();
+}
+function copyLink(){
+  navigator.clipboard.writeText($('#planLink').value||'');
+}
+
+/* ===== Tasks w/ Dependencies ===== */
+function renderTasks(){
+  const tb=$('#taskTable tbody'); tb.innerHTML='';
+  CURRENT.tasks.forEach((t,i)=>{
+    const tr=el('tr',{});
+    // done
+    const tdDone=el('td',{});
+    const chk=el('input',{type:'checkbox',checked:!!t.done});
+    chk.addEventListener('change',()=>{ t.done=chk.checked; });
+    tdDone.appendChild(chk);
+    tr.appendChild(tdDone);
+    // title
+    const tdTitle=el('td',{}); const inpTitle=el('input',{value:t.title||''});
+    inpTitle.addEventListener('input',()=>{ t.title=inpTitle.value; });
+    tdTitle.appendChild(inpTitle); tr.appendChild(tdTitle);
+    // deps
+    const tdDeps=el('td',{}); const inpDeps=el('input',{value:(t.deps||[]).join(',')});
+    inpDeps.placeholder='e.g., 1,3';
+    inpDeps.addEventListener('input',()=>{ t.deps=inpDeps.value.split(',').map(s=>+s.trim()).filter(x=>Number.isInteger(x)); });
+    tdDeps.appendChild(inpDeps); tr.appendChild(tdDeps);
+    // owner
+    const tdOwner=el('td',{}); const inpOwner=el('input',{value:t.owner||''});
+    inpOwner.addEventListener('input',()=>{ t.owner=inpOwner.value; });
+    tdOwner.appendChild(inpOwner); tr.appendChild(tdOwner);
+    // due
+    const tdDue=el('td',{}); const inpDue=el('input',{type:'datetime-local',value:t.due||''});
+    inpDue.addEventListener('input',()=>{ t.due=inpDue.value; });
+    tdDue.appendChild(inpDue); tr.appendChild(tdDue);
+    // actions
+    const tdAct=el('td',{}); 
+    const btnUp=el('button',{className:'btn',textContent:'↑'}); btnUp.onclick=()=>{ moveTask(i,-1); };
+    const btnDn=el('button',{className:'btn',textContent:'↓'}); btnDn.onclick=()=>{ moveTask(i,1); };
+    const btnDel=el('button',{className:'btn',textContent:'Delete'}); btnDel.onclick=()=>{ CURRENT.tasks.splice(i,1); renderTasks(); };
+    tdAct.append(btnUp, btnDn, btnDel); tr.appendChild(tdAct);
+    tb.appendChild(tr);
+  });
+}
+function addTask(){
+  CURRENT.tasks.push({title:'', deps:[], owner:'', due:'', done:false});
+  renderTasks();
+}
+function moveTask(i,dir){
+  const j=i+dir; if(j<0||j>=CURRENT.tasks.length) return;
+  const tmp=CURRENT.tasks[i]; CURRENT.tasks[i]=CURRENT.tasks[j]; CURRENT.tasks[j]=tmp;
+  renderTasks();
+}
+function autoSort(){
+  // simple topological sort based on deps (indices are 1-based display)
+  const n=CURRENT.tasks.length;
+  const deps = CURRENT.tasks.map((t,idx)=> (t.deps||[]).map(d=>d-1).filter(x=>x>=0 && x<n && x!==idx));
+  const indeg = Array(n).fill(0);
+  deps.forEach(lst=>lst.forEach(d=>indeg[d]++));
+  const q=[]; for(let i=0;i<n;i++) if(indeg[i]===0) q.push(i);
+  const order=[];
+  while(q.length){
+    const v=q.shift(); order.push(v);
+    deps.forEach((lst,k)=>{ if(lst.includes(v)){ indeg[k]--; if(indeg[k]===0) q.push(k); }});
+  }
+  if(order.length!==n){ alert('Cycle detected in dependencies. Please review.'); return; }
+  CURRENT.tasks = order.map(i=>CURRENT.tasks[i]);
+  renderTasks();
+}
+
+/* ===== Budget ===== */
+function renderBudget(){
+  const tb=$('#budgetTable tbody'); tb.innerHTML='';
+  CURRENT.budget.forEach((b,i)=>{
+    const tr=el('tr',{});
+    // item
+    const tdItem=el('td',{}); const inpItem=el('input',{value:b.item||''}); inpItem.oninput=()=>b.item=inpItem.value; tdItem.appendChild(inpItem); tr.appendChild(tdItem);
+    // qty
+    const tdQty=el('td',{}); const inpQty=el('input',{type:'number',step:'1',min:'0',value:b.qty??1}); inpQty.oninput=()=>{ b.qty=+inpQty.value; updateBudgetTotal(); }; tdQty.appendChild(inpQty); tr.appendChild(tdQty);
+    // unit
+    const tdUnit=el('td',{}); const inpUnit=el('input',{value:b.unit||''}); inpUnit.oninput=()=>b.unit=inpUnit.value; tdUnit.appendChild(inpUnit); tr.appendChild(tdUnit);
+    // cost/unit
+    const tdCost=el('td',{}); const inpCost=el('input',{type:'number',step:'0.01',min:'0',value:b.cost??0}); inpCost.oninput=()=>{ b.cost=+inpCost.value; updateBudgetTotal(); }; tdCost.appendChild(inpCost); tr.appendChild(tdCost);
+    // subtotal
+    const subtotal = (b.qty||0)*(b.cost||0);
+    const tdSub=el('td',{textContent:money(subtotal)}); tr.appendChild(tdSub);
+    // actions
+    const tdAct=el('td',{}); const btnDel=el('button',{className:'btn',textContent:'Delete'}); btnDel.onclick=()=>{ CURRENT.budget.splice(i,1); renderBudget(); }; tdAct.appendChild(btnDel); tr.appendChild(tdAct);
+    tb.appendChild(tr);
+  });
+  updateBudgetTotal();
+}
+function updateBudgetTotal(){
+  const total = sum(CURRENT.budget, x=>(x.qty||0)*(x.cost||0));
+  $('#budgetTotal').textContent = money(total);
+}
+function addBudget(){
+  CURRENT.budget.push({item:'', qty:1, unit:'', cost:0});
+  renderBudget();
+}
+
+/* ===== Milestones ===== */
+function renderMilestones(){
+  const tb=$('#milestoneTable tbody'); tb.innerHTML='';
+  CURRENT.milestones.forEach((m,i)=>{
+    const tr=el('tr',{});
+    const tdName=el('td',{}); const inpName=el('input',{value:m.name||''}); inpName.oninput=()=>m.name=inpName.value; tdName.appendChild(inpName); tr.appendChild(tdName);
+    const tdDate=el('td',{}); const inpDate=el('input',{type:'date',value:m.date||''}); inpDate.oninput=()=>m.date=inpDate.value; tdDate.appendChild(inpDate); tr.appendChild(tdDate);
+    const tdStatus=el('td',{}); const sel=el('select',{}); ['Planned','In Progress','Done','Blocked'].forEach(s=>sel.appendChild(el('option',{value:s,textContent:s,selected:m.status===s}))); sel.onchange=()=>m.status=sel.value; tdStatus.appendChild(sel); tr.appendChild(tdStatus);
+    const tdNotes=el('td',{}); const inpNotes=el('input',{value:m.notes||''}); inpNotes.oninput=()=>m.notes=inpNotes.value; tdNotes.appendChild(inpNotes); tr.appendChild(tdNotes);
+    const tdAct=el('td',{}); const btnDel=el('button',{className:'btn',textContent:'Delete'}); btnDel.onclick=()=>{ CURRENT.milestones.splice(i,1); renderMilestones(); }; tdAct.appendChild(btnDel); tr.appendChild(tdAct);
+    tb.appendChild(tr);
+  });
+}
+function addMilestone(){
+  CURRENT.milestones.push({name:'', date:new Date().toISOString().slice(0,10), status:'Planned', notes:''});
+  renderMilestones();
+}
+
+/* ===== Save ===== */
+async function saveAll(){
+  if(!CURRENT) return;
+  CURRENT.updated = Date.now();
+  await idb.put('plans', CURRENT);
+  alert('Saved ✔');
+}
+
+/* ===== QR ===== */
+function updateQR(){
+  const target = ($('#qrTarget').value || $('#planLink').value || '').trim();
+  const img = $('#qrImg');
+  if(!target){ img.removeAttribute('src'); img.alt=''; return; }
+  // Use QuickChart QR API (no account). Fallback handled during print if offline.
+  const url = `https://quickchart.io/qr?text=${encodeURIComponent(target)}&size=200&margin=2`;
+  img.src = url;
+  img.alt = 'QR code';
+}
+
+/* ===== One-Pager Export ===== */
+function buildOnePagerHTML(){
+  const link = $('#qrTarget').value || $('#planLink').value;
+  const qrURL = link ? `https://quickchart.io/qr?text=${encodeURIComponent(link)}&size=300&margin=2` : '';
+  const total = money(sum(CURRENT.budget, x=>(x.qty||0)*(x.cost||0)));
+  const routes = (PROFILE&&PROFILE.routes)||{};
+  const fundingLines = [
+    routes?.interac?`interac: ${routes.interac}`:'',
+    routes?.btc?`btc: ${routes.btc}`:'',
+    routes?.eth?`eth: ${routes.eth}`:'',
+    routes?.sol?`sol: ${routes.sol}`:''
+  ].filter(Boolean);
+
+  const tasks = (CURRENT.tasks||[]).map((t,i)=>`<li>${t.done?'✅':'⬜'} <strong>${t.title||'Untitled'}</strong>${t.owner?` — ${t.owner}`:''}${t.due?` <em>(${new Date(t.due).toLocaleString()})</em>`:''}${(t.deps&&t.deps.length)?` <span class="muted">deps: ${t.deps.join(',')}</span>`:''}</li>`).join('');
+  const budgetRows = (CURRENT.budget||[]).map(b=>`<tr><td>${b.item||''}</td><td>${b.qty||0}</td><td>${b.unit||''}</td><td>${money(b.cost||0)}</td><td>${money((b.qty||0)*(b.cost||0))}</td></tr>`).join('');
+  const milestones = (CURRENT.milestones||[]).map(m=>`<li><strong>${m.name||'—'}</strong> — ${m.date||'—'} — ${m.status||'—'} ${m.notes?(' — '+m.notes):''}</li>`).join('');
+
+  return `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escapeHtml(CURRENT.title||'Plan')}</title>
+<style>
+  body{font:15px/1.45 system-ui,Segoe UI,Roboto,Arial;margin:0;color:#0b1b2b}
+  .wrap{max-width:900px;margin:0 auto;padding:24px}
+  h1{margin:0 0 6px;font-size:1.6rem}
+  h2{margin:16px 0 8px;font-size:1.1rem}
+  .muted{color:#5b6d7a}
+  .grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+  .card{border:1px solid #d9e5ef;border-radius:12px;padding:12px}
+  table{width:100%;border-collapse:collapse}
+  th,td{border-bottom:1px solid #e5eff7;padding:6px;vertical-align:top}
+  .tot{font-weight:700}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{background:#eef6fb;border:1px solid #d9e5ef;border-radius:999px;padding:.15rem .45rem;font-size:.8rem}
+  @media print {.no-print{display:none}}
+</style></head>
+<body>
+<div class="wrap">
+  <h1>${escapeHtml(CURRENT.title||'Plan')}</h1>
+  <div class="muted">${escapeHtml(CURRENT.country||'')} · ${(CURRENT.skills||[]).map(escapeHtml).join(', ')} · Updated ${new Date(CURRENT.updated||Date.now()).toLocaleString()}</div>
+
+  <div class="grid" style="margin-top:10px">
+    <div>
+      <div class="card">
+        <h2>Story</h2>
+        <div>${escapeHtml(CURRENT.story||'')}</div>
+        ${(CURRENT.tags&&CURRENT.tags.length)?`<div class="chips" style="margin-top:8px">${CURRENT.tags.map(t=>`<span class="chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
+      </div>
+
+      <div class="card">
+        <h2>Needs</h2>
+        <pre style="white-space:pre-wrap">${escapeHtml(CURRENT.needs||'')}</pre>
+      </div>
+
+      <div class="card">
+        <h2>Checklist</h2>
+        <ul>${tasks}</ul>
+      </div>
+
+      <div class="card">
+        <h2>Budget</h2>
+        <table><thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Cost</th><th>Subtotal</th></tr></thead>
+        <tbody>${budgetRows}</tbody>
+        <tfoot><tr><td colspan="4" class="tot" style="text-align:right">Total</td><td class="tot">${total}</td></tr></tfoot></table>
+      </div>
+
+      <div class="card">
+        <h2>Milestones</h2>
+        <ul>${milestones}</ul>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <h2>Funding</h2>
+        <ul>${fundingLines.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}${(CURRENT.funding||[]).map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul>
+      </div>
+      <div class="card">
+        <h2>Share</h2>
+        ${qrURL ? `<img alt="QR" src="${qrURL}" style="max-width:100%;border:1px solid #d9e5ef;border-radius:8px">` : `<div class="muted">Link: ${escapeHtml(link||'')}</div>`}
+        ${link ? `<div style="margin-top:8px"><a href="${escapeAttr(link)}">${escapeHtml(link)}</a></div>` : ``}
+      </div>
+      <div class="card">
+        <h2>Options Attached</h2>
+        <div class="chips">${(CURRENT.options||[]).map(s=>`<span class="chip">${escapeHtml(s)}</span>`).join('')}</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>`;
+}
+function escapeHtml(s){ return String(s||'').replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m])); }
+function escapeAttr(s){ return String(s||'').replace(/"/g,'&quot;'); }
+
+function previewPrint(){
+  if(!CURRENT){ alert('No plan selected.'); return; }
+  const html = buildOnePagerHTML();
+  const w = window.open('', '_blank');
+  if(!w){ alert('Popup blocked.'); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+}
+
+function downloadHTML(){
+  if(!CURRENT){ alert('No plan selected.'); return; }
+  const html = buildOnePagerHTML();
+  const blob = new Blob([html], {type:'text/html'});
+  const a = el('a',{href:URL.createObjectURL(blob), download:`plan-${CURRENT.id}-onepager.html`});
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+}
+</script>
+
+<!-- =========================================
+     [PART-03 END]
+============================================= -->
+</body>
+</html>
